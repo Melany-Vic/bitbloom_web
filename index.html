@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>BitBloom | Tu aventura tecnológica</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Rubik:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Fondo tecnológico -->
+    <div class="background">
+        <div class="grid"></div>
+        <div class="particle particle-1"></div>
+        <div class="particle particle-2"></div>
+        <div class="particle particle-3"></div>
+        <div class="particle particle-4"></div>
+        <div class="particle particle-5"></div>
+    </div>
+
+    <!-- Bit, el compañero flotante -->
+    <div id="bitCompanion" class="bit-companion hidden">
+        <div class="bit-bubble" id="bitBubble"></div>
+        <div class="bit-avatar-wrap">
+            <img src="assets/characters/bit.png" alt="Bit" class="bit-avatar" id="bitAvatar">
+            <div class="bit-accessory hidden" id="bitAccessory">⭐</div>
+        </div>
+    </div>
+
+    <!-- ===================== PANTALLA: MENÚ PRINCIPAL ===================== -->
+    <main id="screenMenu" class="screen main-menu">
+        <div class="menu-layout">
+            <aside class="menu-panel">
+                <h3>¿Qué es BitBloom?</h3>
+                <p>Un videojuego educativo donde vas a aprender sobre <strong class="accent-cyan">hardware</strong> y <strong class="accent-lime">software</strong> mientras vives una aventura tecnológica.</p>
+            </aside>
+
+            <div class="menu-center">
+                <div class="logo-container">
+                    <img src="assets/logos/logo-bitbloom.png" alt="BitBloom" class="logo-image">
+                </div>
+
+                <div class="menu-profile-tag" id="menuProfileTag"></div>
+
+                <div class="menu-buttons">
+                    <button id="btnStart" class="menu-button primary">▶ COMENZAR</button>
+                    <button id="btnLevels" class="menu-button">◈ NIVELES</button>
+                    <button id="btnMultiplayer" class="menu-button">👥 MULTIJUGADOR</button>
+                    <button id="btnLeaderboard" class="menu-button">🏆 CLASIFICACIÓN</button>
+                    <button id="btnClassCode" class="menu-button">🏫 CÓDIGO DE CLASE</button>
+                    <button id="btnTeacher" class="menu-button hidden">🧑‍🏫 PANEL DEL PROFESOR</button>
+                    <button id="btnCredits" class="menu-button">★ CRÉDITOS</button>
+                </div>
+
+                <p class="version">BITBLOOM v1.0</p>
+                <div class="menu-coins">🪙 <span id="menuCoins">0</span> monedas</div>
+            </div>
+
+            <aside class="menu-panel">
+                <h3>Vas a aprender</h3>
+                <ul class="menu-panel-list">
+                    <li>🧩 Hardware y sus componentes</li>
+                    <li>🪟 Software y sistemas operativos</li>
+                    <li>🩺 Diagnóstico de problemas técnicos</li>
+                    <li>🌐 Redes y ciberseguridad básica</li>
+                </ul>
+            </aside>
+        </div>
+    </main>
+
+    <!-- ===================== PANTALLA: MAPA DE NIVELES ===================== -->
+    <section id="screenLevels" class="screen hidden">
+        <header class="screen-header">
+            <button class="btn-icon" id="btnLevelsBack">← VOLVER</button>
+            <h1 class="screen-title">Mapa de <span class="accent-lime">Bloom</span>Land</h1>
+            <div class="header-stats">
+                <button class="btn-icon" id="btnOpenInstructions">❓ Cómo jugar</button>
+                <button class="btn-icon" id="btnOpenShop">🪙 <span id="levelsCoins">0</span></button>
+                <div class="score-pill">⬡ <span id="totalScore">0</span></div>
+            </div>
+        </header>
+        <div class="level-path" id="levelPath"></div>
+    </section>
+
+    <!-- ===================== PANTALLA: EVALUACIÓN (inicial / final) ===================== -->
+    <section id="screenQuiz" class="screen hidden">
+        <header class="screen-header">
+            <div></div>
+            <h1 class="screen-title" id="quizTitle">Evaluación Inicial</h1>
+            <div></div>
+        </header>
+        <div class="quiz-wrap" id="quizWrap"></div>
+    </section>
+
+    <!-- ===================== PANTALLA: INSTRUCCIONES ===================== -->
+    <section id="screenInstructions" class="screen hidden">
+        <header class="screen-header">
+            <button class="btn-icon" id="btnInstructionsBack">← VOLVER</button>
+            <h1 class="screen-title">Cómo jugar</h1>
+            <div></div>
+        </header>
+        <div class="instructions-wrap" id="instructionsWrap"></div>
+    </section>
+
+    <!-- ===================== PANTALLA: TIENDA ===================== -->
+    <section id="screenShop" class="screen hidden">
+        <header class="screen-header">
+            <button class="btn-icon" id="btnShopBack">← VOLVER</button>
+            <h1 class="screen-title">Tienda de <span class="accent-gold">BitBloom</span></h1>
+            <div class="score-pill">🪙 <span id="shopCoins">0</span></div>
+        </header>
+        <div class="shop-wrap" id="shopWrap"></div>
+    </section>
+
+    <!-- ===================== PANTALLA: PERFIL ===================== -->
+    <section id="screenProfile" class="screen hidden">
+        <header class="screen-header">
+            <button class="btn-icon hidden" id="btnProfileBack">← VOLVER</button>
+            <h1 class="screen-title">Tu perfil</h1>
+            <div></div>
+        </header>
+        <div class="profile-wrap" id="profileWrap"></div>
+    </section>
+
+    <!-- ===================== PANTALLA: TABLA DE CLASIFICACIÓN ===================== -->
+    <section id="screenLeaderboard" class="screen hidden">
+        <header class="screen-header">
+            <button class="btn-icon" id="btnLeaderboardBack">← VOLVER</button>
+            <h1 class="screen-title">Tabla de <span class="accent-gold">Clasificación</span></h1>
+            <button class="btn-icon" id="btnLeaderboardRefresh">🔄 Actualizar</button>
+        </header>
+        <div class="leaderboard-wrap" id="leaderboardWrap"></div>
+    </section>
+
+    <!-- ===================== PANTALLA: MULTIJUGADOR LOCAL ===================== -->
+    <section id="screenMultiplayer" class="screen hidden">
+        <header class="screen-header">
+            <button class="btn-icon" id="btnMultiplayerBack">← VOLVER</button>
+            <h1 class="screen-title">Multijugador <span class="accent-cyan">Local</span></h1>
+            <div></div>
+        </header>
+        <div class="mp-wrap" id="mpWrap"></div>
+    </section>
+
+    <!-- ===================== PANTALLA: PANEL DEL PROFESOR ===================== -->
+    <section id="screenTeacher" class="screen hidden">
+        <header class="screen-header">
+            <button class="btn-icon" id="btnTeacherBack">← VOLVER</button>
+            <h1 class="screen-title">Panel del <span class="accent-lime">Profesor</span></h1>
+            <div></div>
+        </header>
+        <div class="teacher-wrap" id="teacherWrap"></div>
+    </section>
+
+    <!-- ===================== PANTALLA: CÓDIGO DE CLASE ===================== -->
+    <section id="screenClassCode" class="screen hidden">
+        <header class="screen-header">
+            <button class="btn-icon" id="btnClassCodeBack">← VOLVER</button>
+            <h1 class="screen-title">Actividad de tu <span class="accent-lime">Profesor/a</span></h1>
+            <div></div>
+        </header>
+        <div class="classcode-wrap" id="classCodeWrap"></div>
+    </section>
+
+    <!-- ===================== PANTALLA: JUEGO (contenedor dinámico) ===================== -->
+    <section id="screenGame" class="screen hidden">
+        <header class="hud">
+            <button class="btn-icon" id="btnGameExit">✕</button>
+            <div class="hud-title" id="hudLevelTitle">NIVEL 1</div>
+            <div class="hud-lives" id="hudLives"></div>
+            <div class="hud-timer">
+                <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+            </div>
+            <div class="hud-score">⬡ <span id="hudScore">0</span></div>
+        </header>
+        <div class="game-stage" id="gameStage"></div>
+    </section>
+
+    <!-- ===================== PANTALLA: CRÉDITOS ===================== -->
+    <section id="screenCredits" class="screen hidden">
+        <header class="screen-header">
+            <button class="btn-icon" id="btnCreditsBack">← VOLVER</button>
+            <h1 class="screen-title">Créditos</h1>
+            <div></div>
+        </header>
+        <div class="credits-panel">
+            <img src="assets/characters/bit.png" class="credits-bit" alt="Bit">
+            <h2>BitBloom</h2>
+            <p class="credits-tagline">Tu aventura en el mundo tecnológico</p>
+            <div class="concept-list" id="creditsStats"></div>
+            <ul class="credits-list">
+                <li><strong>Diseño &amp; Desarrollo</strong><span>Equipo BitBloom del 3° BTI: Jade Cabrera, Melina Garcete, Mary Maqueda, Victoria Ramírez, Melany Vicezar, Antonella Vidal</span></li>
+                <li><strong>Personaje principal</strong><span>Bit, el pequeño explorador digital</span></li>
+                <li><strong>Misión</strong><span>Enseñar hardware y software jugando</span></li>
+                <li><strong>Hecho para</strong><span>Estudiantes de nivel medio</span></li>
+                <li><strong>Institución</strong><span>Colegio Nacional "Dr. Juan Manuel Frutos"</span></li>
+                <li><strong>Tutores</strong><span>Sara Torres, Heber Benítez</span></li>
+                <li><strong>Profesora guía</strong><span>Ing. Jessica Ramírez</span></li>
+            </ul>
+            <p class="credits-thanks">¡Gracias por jugar y seguir aprendiendo!</p>
+        </div>
+    </section>
+
+    <!-- ===================== MODAL: MISIÓN / RESULTADOS ===================== -->
+    <div id="modalOverlay" class="modal-overlay hidden">
+        <div class="modal-panel" id="modalPanel"></div>
+    </div>
+<script src="js/firebase-init.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/persistence.js"></script>
+    <script src="js/social.js"></script>
+    <script src="js/multiplayer.js"></script>
+    <script src="js/teacher.js"></script>
+    <script src="js/sidequests.js"></script>
+    <script src="js/quiz.js"></script>
+    <script src="js/instructions.js"></script>
+    <script src="js/shop.js"></script>
+    <script src="js/dragdrop.js"></script>
+    <script src="js/level1.js"></script>
+    <script src="js/level2.js"></script>
+    <script src="js/level3.js"></script>
+    <script src="js/level4.js"></script>
+    <script src="js/level5.js"></script>
+    <script src="js/level6.js"></script>
+</body>
+</html>
