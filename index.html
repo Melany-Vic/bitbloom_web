@@ -47,6 +47,7 @@
                 <div class="menu-buttons">
                     <button id="btnStart" class="menu-button primary">▶ COMENZAR</button>
                     <button id="btnLevels" class="menu-button">◈ NIVELES</button>
+                    <button id="btnArena" class="menu-button">🎮 ARENA DE DESAFÍOS</button>
                     <button id="btnMultiplayer" class="menu-button">👥 MULTIJUGADOR</button>
                     <button id="btnLeaderboard" class="menu-button">🏆 CLASIFICACIÓN</button>
                     <button id="btnClassCode" class="menu-button">🏫 CÓDIGO DE CLASE</button>
@@ -203,6 +204,52 @@
         </div>
     </section>
 
+    <!-- ===================== PANTALLA: MULTIJUGADOR EN LÍNEA (configuración) ===================== -->
+    <section id="screenOnlineSetup" class="screen hidden">
+        <header class="screen-header">
+            <button class="btn-icon" id="btnOnlineSetupBack">← VOLVER</button>
+            <h1 class="screen-title">Multijugador <span class="accent-cyan">en línea</span></h1>
+            <div></div>
+        </header>
+        <div class="mp-form" id="onlineSetupWrap"></div>
+    </section>
+
+    <!-- ===================== PANTALLA: SALA EN LÍNEA (lobby + chat) ===================== -->
+    <section id="screenOnlineRoom" class="screen hidden">
+        <header class="screen-header">
+            <button class="btn-icon" id="btnOnlineRoomLeave">← SALIR DE LA SALA</button>
+            <h1 class="screen-title">Sala <span class="accent-gold" id="onlineRoomCodeTitle">----</span></h1>
+            <div></div>
+        </header>
+        <div class="online-room-wrap" id="onlineRoomWrap"></div>
+    </section>
+
+    <!-- ===================== PANTALLA: ARENA DE DESAFÍOS ===================== -->
+    <section id="screenArena" class="screen hidden">
+        <header class="screen-header">
+            <button class="btn-icon" id="btnArenaBack">← VOLVER</button>
+            <h1 class="screen-title">Arena de <span class="accent-magenta">Desafíos</span></h1>
+            <div class="score-pill">🪙 <span id="arenaCoins">0</span></div>
+        </header>
+        <div class="arena-wrap" id="arenaWrap"></div>
+    </section>
+
+    <!-- ===================== PANTALLA: JUEGO DE ARENA (Phaser) ===================== -->
+    <section id="screenArenaGame" class="screen hidden">
+        <header class="hud">
+            <button class="btn-icon" id="btnArenaGameExit">✕</button>
+            <div class="hud-title" id="arenaGameTitle">DESAFÍO</div>
+            <div class="hud-lives" id="arenaLives"></div>
+            <div class="hud-timer">
+                <div class="timer-track"><div class="timer-fill" id="arenaTimerFill"></div></div>
+            </div>
+            <div class="hud-score">⬡ <span id="arenaScore">0</span></div>
+        </header>
+        <div class="arena-stage" id="arenaStage">
+            <div class="arena-loading" id="arenaLoading">Cargando el motor del juego…</div>
+        </div>
+    </section>
+
     <!-- ===================== MODAL: MISIÓN / RESULTADOS ===================== -->
     <div id="modalOverlay" class="modal-overlay hidden">
         <div class="modal-panel" id="modalPanel"></div>
@@ -212,6 +259,7 @@
     <script src="js/persistence.js"></script>
     <script src="js/social.js"></script>
     <script src="js/multiplayer.js"></script>
+    <script src="js/online-rooms.js"></script>
     <script src="js/teacher.js"></script>
     <script src="js/sidequests.js"></script>
     <script src="js/quiz.js"></script>
@@ -224,5 +272,11 @@
     <script src="js/level4.js"></script>
     <script src="js/level5.js"></script>
     <script src="js/level6.js"></script>
+    <script src="js/arena/arena.js"></script>
+    <script src="js/arena/game1-runner.js"></script>
+    <script src="js/arena/game2-assembly.js"></script>
+    <script src="js/arena/game3-defense.js"></script>
+    <script src="js/arena/game4-tunnel.js"></script>
+    <script src="js/arena/game5-boss.js"></script>
 </body>
 </html>

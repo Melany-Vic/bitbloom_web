@@ -68,6 +68,33 @@ function _initFirebase(){
   return _fbReady;
 }
 
+/* ============ 2bis) PRIMITIVAS CRUDAS DE FIRESTORE — para salas en vivo ============
+   window.FbLive expone lo necesario para el multijugador en tiempo real
+   (salas, jugadores, chat). Solo funciona si FIREBASE_ENABLED es true. */
+window.FbLive = {
+  enabled: FIREBASE_ENABLED,
+  async ready(){
+    if (!FIREBASE_ENABLED) return false;
+    await _initFirebase();
+    return !!_fbDb;
+  },
+  get uid(){ return _fbUid; },
+  doc(...path){ return _fb.doc(_fbDb, ...path); },
+  collection(...path){ return _fb.collection(_fbDb, ...path); },
+  async getDoc(ref){ return _fb.getDoc(ref); },
+  async setDoc(ref, data, opts){ return _fb.setDoc(ref, data, opts || {}); },
+  async updateDoc(ref, data){ return _fb.updateDoc(ref, data); },
+  async deleteDoc(ref){ return _fb.deleteDoc(ref); },
+  async addDoc(colRef, data){ return _fb.addDoc(colRef, data); },
+  onSnapshotDoc(ref, cb){ return _fb.onSnapshot(ref, cb); },
+  onSnapshotQuery(q, cb){ return _fb.onSnapshot(q, cb); },
+  query(colRef, ...clauses){ return _fb.query(colRef, ...clauses); },
+  orderBy(field, dir){ return _fb.orderBy(field, dir || 'asc'); },
+  limitTo(n){ return _fb.limit(n); },
+  serverTimestamp(){ return _fb.serverTimestamp(); },
+  fieldDelete(){ return _fb.deleteField(); },
+};
+
 /* ============ 2) API UNIFICADA — mismo formato que window.storage ============ */
 window.AppStorage = {
   async get(key, shared){
@@ -114,4 +141,17 @@ window.AppStorage = {
     }
     return null;
   },
+};
+
+/* ============ 3) API DE BAJO NIVEL — para salas en vivo y chat ============
+   A diferencia de AppStorage (get/set simples), las salas necesitan
+   escuchas en tiempo real (onSnapshot) y subcolecciones (mensajes).
+   window.FirebaseAPI expone eso directamente cuando Firebase está activo.
+   ============================================================= */
+window.FirebaseAPI = {
+  isEnabled: () => FIREBASE_ENABLED,
+  ready: () => _initFirebase(),
+  db: () => _fbDb,
+  fs: () => _fb,
+  uid: () => _fbUid,
 };
