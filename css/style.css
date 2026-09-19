@@ -390,6 +390,7 @@ img{ max-width:100%; display:block; }
 .concept-list{ display:flex; flex-direction:column; gap:10px; text-align:left; margin-bottom:16px; max-height:46vh; overflow-y:auto; padding-right:4px; }
 .concept-card{ display:flex; gap:12px; align-items:flex-start; background:var(--bg-panel-2); border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px 14px; }
 .concept-icon{ font-size:24px; line-height:1; flex-shrink:0; }
+.concept-icon img{ width:28px; height:28px; object-fit:contain; }
 .concept-term{ font-family:var(--font-display); font-size:12.5px; color:var(--circuit-cyan); margin-bottom:4px; letter-spacing:.02em; }
 .concept-def{ font-size:12.5px; color:var(--text-dim); line-height:1.4; }
 
@@ -771,12 +772,23 @@ img{ max-width:100%; display:block; }
 .arena-card-desc{ font-size:12.5px; color:var(--text-dim); line-height:1.4; margin-bottom:14px; }
 .arena-card-reward{ font-family:var(--font-display); font-size:12px; color:var(--spark-gold); }
 
+#screenArenaGame{ height:100vh; min-height:0; max-height:100vh; overflow:hidden; }
 .arena-stage{
-  flex:1; position:relative; display:flex; align-items:center; justify-content:center;
+  flex:1; min-height:0; position:relative; display:flex; align-items:center; justify-content:center;
   padding:10px 2vw 20px; overflow:hidden;
 }
+.arena-canvas-box{
+  position:relative;
+  width:100%; max-width:900px;
+  max-height:100%;
+  aspect-ratio:16/9;
+  margin:0 auto;
+}
+.arena-canvas-box canvas{
+  display:block; width:100% !important; height:100% !important;
+  border-radius:var(--radius-sm); box-shadow:0 10px 40px rgba(0,0,0,.5);
+}
 .arena-loading{ font-family:var(--font-display); font-size:14px; color:var(--text-dim); text-align:center; }
-.arena-stage canvas{ max-width:100%; max-height:100%; border-radius:var(--radius-sm); box-shadow:0 10px 40px rgba(0,0,0,.5); }
 
 /* Controles táctiles superpuestos para celular */
 .arena-touch-controls{

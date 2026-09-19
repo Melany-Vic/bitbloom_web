@@ -7,14 +7,31 @@ const L3_HARDWARE = [
   { label:'Disco Duro', img:'assets/elements/hdd.png' }, { label:'Placa Madre', img:'assets/elements/motherboard.png' },
   { label:'Teclado', img:'assets/elements/keyboard.png' }, { label:'Mouse', img:'assets/elements/mouse.png' },
   { label:'Fuente de Poder', img:'assets/elements/powersupply.png' }, { label:'Computadora (PC)', img:'assets/elements/pc.png' },
+  { label:'Tarjeta de Red', img:'assets/elements/networkcard.png' }, { label:'Cable Ethernet', img:'assets/elements/ethernetcable.png' },
 ];
 const L3_SOFTWARE = [
-  { label:'Procesador de Texto', icon:'📄' }, { label:'Editor de Imágenes', icon:'🎨' }, { label:'Sistema Operativo', icon:'🪟' },
-  { label:'Navegador Web', icon:'🌐' }, { label:'Videojuego', icon:'🎮' }, { label:'Antivirus', icon:'🛡️' },
-  { label:'App de Mensajería', icon:'💬' }, { label:'Hoja de Cálculo', icon:'📊' }, { label:'Reproductor de Música', icon:'🎵' },
-  { label:'App Bancaria', icon:'🏦' },
+  { label:'Procesador de Texto', img:'assets/software/wordprocessor.png' },
+  { label:'Editor de Imágenes', img:'assets/software/imageeditor.png' },
+  { label:'Editor de Video', img:'assets/software/videoeditor.png' },
+  { label:'Navegador Web', img:'assets/software/browser.png' },
+  { label:'Antivirus', icon:'🛡️' },
+  { label:'App de Mensajería', img:'assets/software/messaging.png' },
+  { label:'Correo Electrónico', img:'assets/software/email.png' },
+  { label:'Hoja de Cálculo', img:'assets/software/spreadsheet.png' },
+  { label:'Reproductor Multimedia', img:'assets/software/mediaplayer.png' },
+  { label:'Programa de Presentaciones', img:'assets/software/presentation.png' },
+  { label:'Explorador de Archivos', img:'assets/software/fileexplorer.png' },
+  { label:'Base de Datos', img:'assets/software/database.png' },
+  { label:'Editor de Código', img:'assets/software/codeeditor.png' },
+  { label:'HTML', img:'assets/software/html.png' },
+  { label:'CSS', img:'assets/software/css.png' },
+  { label:'JavaScript', img:'assets/software/javascript.png' },
+  { label:'Python', img:'assets/software/python.png' },
+  { label:'Archivo', img:'assets/software/file.png' },
+  { label:'Programas y Aplicaciones', img:'assets/software/appsprograms.png' },
+  { label:'Sistema Operativo', img:'assets/software/operatingsystems.png' },
 ];
-const L3_TOTAL = 14;
+const L3_TOTAL = 18;
 let l3Index = 0;
 let l3Queue = [];
 let l3Answered = false;

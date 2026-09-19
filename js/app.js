@@ -314,8 +314,10 @@ const CONCEPTS = {
     { icon:'📶', term:'Problemas de red', def:'Si varios dispositivos no logran conectarse, revisa el router o la configuración de red.' },
   ],
   3: [
-    { icon:'🖥️', term:'Hardware', def:'Todo lo físico que puedes tocar: monitor, teclado, disco duro, CPU, cables...' },
-    { icon:'🪟', term:'Software', def:'Los programas y aplicaciones que le indican al hardware qué hacer.' },
+    { icon:'<img src="assets/elements/pc.png" alt="">', term:'Hardware', def:'Todo lo físico que puedes tocar: monitor, teclado, disco duro, CPU, cables...' },
+    { icon:'<img src="assets/software/systemsoftware.png" alt="">', term:'Software del sistema', def:'Programas como el sistema operativo, que hacen funcionar la computadora por dentro.' },
+    { icon:'<img src="assets/software/appsoftware.png" alt="">', term:'Software de aplicación', def:'Los programas que usás directamente: navegador, editor, juegos, mensajería...' },
+    { icon:'<img src="assets/software/folder.png" alt="">', term:'Programa', def:'Un conjunto de instrucciones guardadas en un archivo, listas para ejecutarse.' },
   ],
   4: [
     { icon:'⚙️', term:'Núcleo (Kernel)', def:'La parte central del sistema operativo: conecta el hardware con el software.' },

@@ -110,14 +110,13 @@ async function launchArenaGame(key){
     return;
   }
 
-  const loadingEl = $('#arenaLoading');
-  if (loadingEl) loadingEl.remove();
+  $('#arenaStage').innerHTML = '<div class="arena-canvas-box" id="arenaCanvasBox"></div>';
 
   if (arenaPhaserGame){ arenaPhaserGame.destroy(true); arenaPhaserGame = null; }
 
   arenaPhaserGame = new Phaser.Game({
     type: Phaser.AUTO,
-    parent: 'arenaStage',
+    parent: 'arenaCanvasBox',
     width: 800,
     height: 450,
     backgroundColor: '#0a1024',
@@ -147,7 +146,7 @@ window.ArenaHUD = { setLives: arenaSetLives, setScore: arenaSetScore, setTimer: 
 /* ---------- Controles táctiles compartidos (para celular) ---------- */
 function addArenaTouchControls(scene, opts){
   opts = opts || {};
-  const stage = document.getElementById('arenaStage');
+  const stage = document.getElementById('arenaCanvasBox') || document.getElementById('arenaStage');
   const wrap = document.createElement('div');
   wrap.className = 'arena-touch-controls';
   wrap.innerHTML = `
