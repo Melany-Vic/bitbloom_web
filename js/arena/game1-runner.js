@@ -59,7 +59,8 @@ function ArenaRunnerScene(){
       obj = this.physics.add.sprite(860, this.groundY - 28, key);
       obj.setDisplaySize(48, 48);
     } else {
-      obj = this.physics.add.rectangle(860, this.groundY - 20, 28, 40, 0xff4d8f);
+      obj = this.add.rectangle(860, this.groundY - 20, 28, 40, 0xff4d8f);
+      this.physics.add.existing(obj);
     }
     obj.body.allowGravity = false;
     obj.body.immovable = true;
@@ -69,7 +70,8 @@ function ArenaRunnerScene(){
   spawnCollectible(){
     if (this.ended) return;
     const y = this.groundY - (Math.random() < 0.5 ? 60 : 140);
-    const obj = this.physics.add.circle(860, y, 11, 0x4fd6ff);
+    const obj = this.add.circle(860, y, 11, 0x4fd6ff);
+    this.physics.add.existing(obj);
     obj.body.allowGravity = false;
     this.collectibles.add(obj);
   }

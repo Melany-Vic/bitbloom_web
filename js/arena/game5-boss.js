@@ -120,7 +120,8 @@ function ArenaBossScene(){
   spawnProjectile(){
     if (this.ended) return;
     const x = rand(60, 740);
-    const p = this.physics.add.circle(x, 0, 10, 0xff4d8f);
+    const p = this.add.circle(x, 0, 10, 0xff4d8f);
+    this.physics.add.existing(p);
     p.body.setAllowGravity(true);
     p.setVelocityY(220 + this.elapsed * 2);
     this.projectiles.add(p);

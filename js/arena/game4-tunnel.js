@@ -81,7 +81,8 @@ function ArenaTunnelScene(){
       this.malware.add(m);
     } else {
       const p = this.protocols[rand(0, this.protocols.length - 1)];
-      const c = this.physics.add.circle(860, this.lanes[lane], 14, p.color);
+      const c = this.add.circle(860, this.lanes[lane], 14, p.color);
+      this.physics.add.existing(c);
       c.protocolIndex = this.protocols.indexOf(p);
       this.packets.add(c);
     }
