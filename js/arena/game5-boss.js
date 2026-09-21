@@ -123,7 +123,7 @@ function ArenaBossScene(){
     const p = this.add.circle(x, 0, 10, 0xff4d8f);
     this.physics.add.existing(p);
     p.body.setAllowGravity(true);
-    p.setVelocityY(220 + this.elapsed * 2);
+    p.body.setVelocityY(220 + this.elapsed * 2);
     this.projectiles.add(p);
   }
 
