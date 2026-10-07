@@ -17,9 +17,9 @@ const ARENA_GAMES = [
   { key:'assembly', name:'Ensamblaje Bajo Presión',    icon:'🧩', char:'byte',
     desc:'Recolectá las piezas de la PC en las plataformas antes de que te atrapen.',
     factory:() => new ArenaAssemblyScene(), coins:35 },
-  { key:'defense',  name:'Defensa del Servidor',       icon:'🛡️', char:'net',
-    desc:'Saltá sobre los enemigos que avanzan en oleadas antes de que lleguen al servidor.',
-    factory:() => new ArenaDefenseScene(), coins:35 },
+  { key:'pixel',    name:'Taller de Píxeles',          icon:'🎨', char:'pixel',
+    desc:'Atrapá las gotas de luz roja, verde y azul para mezclar el color pedido y pintar el cuadro.',
+    factory:() => new ArenaPixelScene(), coins:35 },
   { key:'tunnel',   name:'Túnel de la Red',            icon:'🚇', char:'data',
     desc:'Cambiá de carril para esquivar el malware y atrapar solo los paquetes correctos.',
     factory:() => new ArenaTunnelScene(), coins:35 },
@@ -27,6 +27,26 @@ const ARENA_GAMES = [
     desc:'El desafío final: juntá herramientas y derrotá al Corruptor saltando sobre él.',
     factory:() => new ArenaBossScene(), coins:50 },
 ];
+
+/* ---------- Personaje elegido en la tienda + items compartidos ---------- */
+function arenaSkinId(){ return (State.skin && SKIN_IDS.indexOf(State.skin) >= 0) ? State.skin : 'bit'; }
+function arenaLoadPlayer(scene, pose){
+  const id = arenaSkinId();
+  const file = (pose === 'run' && id === 'bit') ? 'bit_run' : id;
+  scene.load.image('player', 'assets/skins/' + file + '.png');
+}
+function arenaLoadItems(scene, list){
+  (list || ['coin','bit_coin','xp_crystal']).forEach(k => scene.load.image('it_' + k, 'assets/items/' + k + '.png'));
+}
+/* Escala el sprite a una altura dada y ajusta la caja de colisión a los pies */
+function arenaFitPlayer(sprite, h, wFrac, hFrac){
+  wFrac = wFrac || 0.5; hFrac = hFrac || 0.8;
+  const fw = sprite.width, fh = sprite.height;
+  sprite.setScale(h / fh);
+  const bw = fw * wFrac, bh = fh * hFrac;
+  sprite.body.setSize(bw, bh);
+  sprite.body.setOffset((fw - bw) / 2, fh - bh);
+}
 
 let _phaserLoadPromise = null;
 function loadPhaser(){
@@ -83,7 +103,7 @@ function openArenaBrief(key){
     <div class="speaker-tag">${info.name.toUpperCase()} · ${info.role}</div>
     <h2>${g.icon} ${g.name}</h2>
     <p>${g.desc}</p>
-    <div class="modal-controls"><b>Controles:</b> Flechas o WASD para mover, ESPACIO o flecha arriba para saltar. En celular o tablet: gira el dispositivo en horizontal y usa los botones en pantalla.</div>
+    <div class="modal-controls"><b>Controles:</b> Flechas o WASD para mover, ESPACIO o flecha arriba para saltar (en la Carrera, flecha abajo para deslizarte). Puedes tocar o deslizar el dedo en la pantalla. En celular o tablet: gira el dispositivo en horizontal y usa los botones en pantalla.</div>
     <div class="modal-actions">
       <button class="modal-btn" id="arenaCancel">Cerrar</button>
       <button class="modal-btn primary" id="arenaGo">¡A jugar! ▶</button>
@@ -123,6 +143,7 @@ async function launchArenaGame(key){
     backgroundColor: '#0a1024',
     physics: { default:'arcade', arcade:{ gravity:{ y: 1300 }, debug:false } },
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+    input: { activePointers: 3, touch: { capture: true } },
     scene: g.factory(),
   });
 }
@@ -151,12 +172,26 @@ function addArenaTouchControls(scene, opts){
   const wrap = document.createElement('div');
   wrap.className = 'arena-touch-controls';
   if (opts.laneMode){
+    /* Túnel de la Red: ▲ ▼ a la derecha, un poco más grandes */
+    wrap.classList.add('lane');
     wrap.innerHTML = `
+      <div class="arena-touch-spacer"></div>
       <div class="arena-touch-updown">
         <div class="arena-touch-btn" id="atUp">▲</div>
         <div class="arena-touch-btn" id="atDown">▼</div>
       </div>
-      <div class="arena-touch-spacer"></div>
+    `;
+  } else if (opts.runnerMode){
+    /* Carrera: ▼ deslizarse (izquierda) y ▲ saltar (derecha) */
+    wrap.classList.add('lane');
+    wrap.innerHTML = `
+      <div class="arena-touch-btn" id="atDown">▼</div>
+      <div class="arena-touch-btn" id="atUp">▲</div>
+    `;
+  } else if (opts.horizontalOnly){
+    wrap.innerHTML = `
+      <div class="arena-touch-btn" id="atLeft">◀</div>
+      <div class="arena-touch-btn" id="atRight">▶</div>
     `;
   } else {
     wrap.innerHTML = `
@@ -178,6 +213,8 @@ function addArenaTouchControls(scene, opts){
     node.addEventListener('pointercancel', release);
     node.addEventListener('pointerleave', release);
     node.addEventListener('contextmenu', (e) => e.preventDefault());
+    /* iPhone/iPad (Safari): evita zoom, scroll y selección al mantener presionado */
+    node.addEventListener('touchstart', (e) => e.preventDefault(), { passive:false });
   };
   bind('atLeft', 'left');
   bind('atRight', 'right');

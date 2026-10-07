@@ -27,6 +27,7 @@ let audioCtx = null;
 function beep(type){
   try{
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume(); // iPhone/Safari exige reanudar tras un toque
     const o = audioCtx.createOscillator();
     const g = audioCtx.createGain();
     o.connect(g); g.connect(audioCtx.destination);
@@ -67,6 +68,7 @@ const State = {
   shopOwned: new Set(),
   sideQuests: new Set(),
   arenaBest: {},
+  skin: 'bit', // personaje equipado (tienda)
   history: {}, // progreso por día: { 'AAAA-MM-DD': { level:{id:{...}}, arena:{key:{...}}, points, coins } }
   timeBonus: 1,
   onboardingDone: false,

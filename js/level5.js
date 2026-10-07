@@ -48,7 +48,7 @@ function initLevel5(){
     <div class="level-goal-bar" id="l5Goal"></div>
     <div class="l5-progress" id="l5Progress"></div>
     <div class="l5-lane" id="l5Lane">
-      <img src="assets/characters/bit.png" class="l5-bit" id="l5Bit" alt="Bit">
+      <img src="assets/skins/${currentSkin()}.png" class="l5-bit" id="l5Bit" alt="Personaje">
     </div>
     <p class="level-hint">Arrastrá el dedo o el mouse sobre el área de juego, o usá las flechas ← →.</p>
   `;

@@ -969,3 +969,32 @@ img{ max-width:100%; display:block; }
 .prog-day-row{ display:flex; justify-content:space-between; gap:10px; padding:7px 14px; border-top:1px solid var(--line); font-size:12px; color:var(--text-dim); }
 .prog-day-row span:first-child{ color:var(--text-hi); }
 @media (max-width:520px){ .prog-stats{ grid-template-columns:repeat(2, 1fr); } }
+
+/* Tienda: personajes */
+.shop-section-title{ font-family:var(--font-display); font-size:14px; margin:18px 0 12px; text-align:left; }
+.shop-section-title span{ font-family:var(--font-body); font-size:12px; color:var(--text-dim); font-weight:400; }
+.skin-grid{ grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); }
+.skin-card .skin-img-wrap{ height:130px; display:flex; align-items:center; justify-content:center; margin-bottom:8px;
+  background:radial-gradient(circle at 50% 60%, rgba(79,214,255,0.14), transparent 70%); border-radius:var(--radius-sm); }
+.skin-card .skin-img{ max-height:124px; max-width:100%; width:auto; object-fit:contain; filter:drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
+.skin-card.equipped{ border-color:var(--bloom-lime); box-shadow:0 0 18px rgba(164,242,60,0.25); }
+.profile-head{ width:26px; height:auto; vertical-align:middle; margin-right:2px; }
+.arena-rotate-hint .rotate-sub{ font-family:var(--font-body); font-size:12px; color:var(--text-dim); }
+
+
+/* =========================================================
+   iPhone / iPad (Safari) y botones del Túnel de la Red / Carrera
+   ========================================================= */
+button, .arena-touch-btn, .menu-button{ touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+body.in-game{ position:fixed; inset:0; width:100%; overflow:hidden; overscroll-behavior:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+.arena-canvas-box canvas{ touch-action:none; -webkit-touch-callout:none; }
+#screenArenaGame{ height:-webkit-fill-available; }
+.arena-stage{ padding-left:max(2vw, env(safe-area-inset-left)); padding-right:max(2vw, env(safe-area-inset-right)); padding-bottom:max(8px, env(safe-area-inset-bottom)); }
+.arena-touch-controls{ padding-left:max(10px, env(safe-area-inset-left)); padding-right:max(10px, env(safe-area-inset-right)); }
+.arena-touch-controls.lane .arena-touch-btn{ width:48px; height:48px; font-size:18px; }
+.arena-touch-controls.lane .arena-touch-updown{ gap:10px; }
+@media (orientation:landscape) and (max-height:520px){
+  .arena-stage{ padding-left:max(1vw, env(safe-area-inset-left)); padding-right:max(1vw, env(safe-area-inset-right)); padding-bottom:max(4px, env(safe-area-inset-bottom)); }
+  .arena-touch-controls.lane .arena-touch-btn{ width:42px; height:42px; font-size:16px; }
+  .arena-touch-controls.lane .arena-touch-updown{ gap:8px; }
+}

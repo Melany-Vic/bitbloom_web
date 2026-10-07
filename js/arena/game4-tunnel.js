@@ -9,7 +9,7 @@ function ArenaTunnelScene(){
   constructor(){ super('ArenaTunnel'); }
 
   preload(){
-    this.load.image('bit', 'assets/characters/bit.png');
+    arenaLoadPlayer(this);
     this.load.image('lag', 'assets/enemies/lag.png');
     this.load.image('glitch', 'assets/enemies/glitch.png');
   }
@@ -29,9 +29,9 @@ function ArenaTunnelScene(){
     this.targetText = this.add.text(650, 16, '', { fontFamily:'Arial Black', fontSize:16, color:'#ffffff' });
     this.updateTargetHint();
 
-    this.player = this.physics.add.sprite(120, this.lanes[this.laneIndex], 'bit');
-    this.player.setDisplaySize(48, 48);
+    this.player = this.physics.add.sprite(120, this.lanes[this.laneIndex], 'player');
     this.player.body.setAllowGravity(false);
+    arenaFitPlayer(this.player, 72, 0.5, 0.6);
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');

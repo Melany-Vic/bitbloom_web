@@ -9,7 +9,8 @@ function ArenaBossScene(){
   constructor(){ super('ArenaBoss'); }
 
   preload(){
-    this.load.image('bit', 'assets/characters/bit.png');
+    arenaLoadPlayer(this);
+    arenaLoadItems(this, ['save_station']);
     this.load.image('corruptor', 'assets/enemies/corrupt.png');
   }
 
@@ -30,9 +31,8 @@ function ArenaBossScene(){
     const groundBody = this.add.rectangle(400, this.groundY + 25, 900, 50, 0x0d1530, 0);
     this.physics.add.existing(groundBody, true);
 
-    this.player = this.physics.add.sprite(80, this.groundY - 50, 'bit');
-    this.player.setDisplaySize(50, 50);
-    this.player.body.setSize(70, 90);
+    this.player = this.physics.add.sprite(80, this.groundY - 50, 'player');
+    arenaFitPlayer(this.player, 60);
     this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, groundBody);
     this.physics.add.collider(this.player, platforms);
@@ -85,6 +85,15 @@ function ArenaBossScene(){
     this.bossHp = 3;
     this.hpBarBg.setVisible(true); this.hpBar.setVisible(true);
     this.hint.setText('Fase 2/2 — Saltá SOBRE el Corruptor cuando brille verde.');
+    // Estación de guardado: repara 1 vida (un solo uso)
+    this.station = this.physics.add.staticImage(740, this.groundY - 28, 'it_save_station');
+    this.station.setScale(56 / this.station.height).refreshBody();
+    this.physics.add.overlap(this.player, this.station, () => {
+      if (!this.station || !this.station.active) return;
+      this.station.destroy();
+      if (this.lives < 3){ this.lives++; ArenaHUD.setLives(this.lives); }
+      this.score += 20; beep('win');
+    });
     this.physics.add.existing(this.corruptor);
     this.corruptor.body.setAllowGravity(false);
     this.corruptor.dir = 1;

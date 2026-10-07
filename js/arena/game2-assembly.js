@@ -9,7 +9,8 @@ function ArenaAssemblyScene(){
   constructor(){ super('ArenaAssembly'); }
 
   preload(){
-    this.load.image('bit', 'assets/characters/bit.png');
+    arenaLoadPlayer(this);
+    arenaLoadItems(this, ['teleporter']);
     this.load.image('overclock', 'assets/enemies/overclock.png');
     this.load.image('corrupt', 'assets/enemies/corrupt.png');
     ['cpu','ram','gpu','ssd'].forEach(k => this.load.image(k, `assets/elements/${k}.png`));
@@ -36,9 +37,8 @@ function ArenaAssemblyScene(){
     this.door = null;
     this.hint = this.add.text(20, 16, '', { fontFamily:'monospace', fontSize:13, color:'#7d93b8' });
 
-    this.player = this.physics.add.sprite(60, 350, 'bit');
-    this.player.setDisplaySize(50, 50);
-    this.player.body.setSize(70, 90);
+    this.player = this.physics.add.sprite(60, 350, 'player');
+    arenaFitPlayer(this.player, 58);
     this.player.setCollideWorldBounds(true);
 
     this.physics.add.collider(this.player, this.platformGroup);
@@ -56,6 +56,7 @@ function ArenaAssemblyScene(){
     this.collectibles.clear(true, true);
     this.enemies.clear(true, true);
     if (this.door) this.door.destroy();
+    if (this.doorImg) this.doorImg.destroy();
 
     const layout = [
       { x:400, y:430, w:820, h:30 },
@@ -80,7 +81,10 @@ function ArenaAssemblyScene(){
       this.collectibles.add(item);
     });
 
-    this.door = this.add.rectangle(700, 165, 40, 60, 0x233265).setStrokeStyle(2, 0x4fd6ff);
+    this.door = this.add.rectangle(700, 165, 40, 60, 0x233265, 0.25).setStrokeStyle(2, 0x4fd6ff);
+    if (this.doorImg) this.doorImg.destroy();
+    this.doorImg = this.add.image(700, 190, 'it_teleporter').setOrigin(0.5, 1).setDepth(0);
+    this.doorImg.setScale(64 / this.doorImg.height * 1.2);
     this.physics.add.existing(this.door);
     this.door.body.allowGravity = false;
     this.door.body.immovable = true;

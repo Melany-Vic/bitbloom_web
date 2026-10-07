@@ -2,8 +2,12 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>BitBloom | Tu aventura tecnológica</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#050914">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Rubik:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
@@ -266,6 +270,7 @@
     <div id="arenaRotateHint" class="arena-rotate-hint">
         <div class="rotate-icon">📱</div>
         <p>Gira tu celular o tablet en horizontal para jugar con comodidad</p>
+        <p class="rotate-sub">¿No gira? Desactiva el bloqueo de rotación (en iPhone: desliza desde la esquina superior derecha y toca el candado).</p>
     </div>
 
     <!-- ===================== MODAL: MISIÓN / RESULTADOS ===================== -->
@@ -293,7 +298,7 @@
     <script src="js/arena/arena.js"></script>
     <script src="js/arena/game1-runner.js"></script>
     <script src="js/arena/game2-assembly.js"></script>
-    <script src="js/arena/game3-defense.js"></script>
+    <script src="js/arena/game3-pixel.js"></script>
     <script src="js/arena/game4-tunnel.js"></script>
     <script src="js/arena/game5-boss.js"></script>
 </body>

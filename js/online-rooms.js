@@ -16,7 +16,7 @@
 const ONLINE_ROOM_ACTIVITIES = [
   { key:'runner',   name:'🏃 Carrera de Bits' },
   { key:'assembly', name:'🧩 Ensamblaje Bajo Presión' },
-  { key:'defense',  name:'🛡️ Defensa del Servidor' },
+  { key:'pixel',    name:'🎨 Taller de Píxeles' },
   { key:'tunnel',   name:'🚇 Túnel de la Red' },
   { key:'boss',     name:'👹 Asalto al Corruptor' },
 ];

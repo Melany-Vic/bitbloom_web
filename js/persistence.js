@@ -111,6 +111,7 @@ function buildSaveData(){
     preQuizScore: State.preQuizScore,
     postQuizScore: State.postQuizScore,
     arenaBest: State.arenaBest || {},
+    skin: State.skin || 'bit',
     history: State.history || {},
     savedAt: Date.now(),
   };
@@ -146,6 +147,7 @@ function applySaveData(data){
   State.postQuizScore = (data.postQuizScore != null) ? data.postQuizScore : null;
   State.arenaBest = data.arenaBest || {};
   State.history = data.history || {};
+  State.skin = data.skin || 'bit';
   const acc = document.getElementById('bitAccessory');
   if (acc) acc.classList.toggle('hidden', !State.shopOwned.has('accessory'));
 }
@@ -183,6 +185,7 @@ function resetLocalState(){
   State.postQuizScore = null;
   State.arenaBest = {};
   State.history = {};
+  State.skin = 'bit';
   const acc = document.getElementById('bitAccessory');
   if (acc) acc.classList.add('hidden');
 }
