@@ -10,6 +10,8 @@ function ArenaTunnelScene(){
 
   preload(){
     arenaLoadPlayer(this);
+    arenaLoadItems(this, ['data_box']);
+    ['saw', 'spikecube', 'mace'].forEach(k => this.load.image('ob_' + k, `assets/obstacles/${k}.png`));
     this.load.image('lag', 'assets/enemies/lag.png');
     this.load.image('glitch', 'assets/enemies/glitch.png');
   }
@@ -40,6 +42,8 @@ function ArenaTunnelScene(){
 
     this.packets = this.physics.add.group({ allowGravity:false });
     this.malware = this.physics.add.group({ allowGravity:false });
+    this.bonus = this.physics.add.group({ allowGravity:false });
+    this.physics.add.overlap(this.player, this.bonus, (pl, b) => { b.destroy(); this.score += 40; beep('win'); }, null, this);
     this.physics.add.overlap(this.player, this.packets, this.hitPacket, null, this);
     this.physics.add.overlap(this.player, this.malware, this.hitMalware, null, this);
 
@@ -74,11 +78,19 @@ function ArenaTunnelScene(){
   spawnThing(){
     if (this.ended) return;
     const lane = rand(0, 2);
-    if (Math.random() < 0.3){
-      const key = Math.random() < 0.5 ? 'lag' : 'glitch';
+    const roll = Math.random();
+    if (roll < 0.30){
+      const key = Phaser.Utils.Array.GetRandom(['lag', 'glitch', 'ob_saw', 'ob_spikecube', 'ob_mace']);
       const m = this.physics.add.sprite(860, this.lanes[lane], key);
-      m.setDisplaySize(42, 42);
+      m.setScale(48 / m.height);
       this.malware.add(m);
+      m.body.setSize(m.width * 0.7, m.height * 0.7, true);
+      if (key === 'ob_saw' || key === 'ob_mace') this.tweens.add({ targets:m, angle:360, duration:700, repeat:-1 });
+    } else if (roll < 0.37){
+      /* Caja de datos: bonus que no depende del protocolo */
+      const b = this.physics.add.sprite(860, this.lanes[lane], 'it_data_box');
+      b.setScale(40 / b.height);
+      this.bonus.add(b);
     } else {
       const p = this.protocols[rand(0, this.protocols.length - 1)];
       const c = this.add.circle(860, this.lanes[lane], 14, p.color);
@@ -126,6 +138,7 @@ function ArenaTunnelScene(){
     const dx = speed * delta / 1000;
     this.packets.children.iterate(o => { if (o){ o.x -= dx; if (o.x < -40) o.destroy(); } });
     this.malware.children.iterate(o => { if (o){ o.x -= dx; if (o.x < -40) o.destroy(); } });
+    this.bonus.children.iterate(o => { if (o){ o.x -= dx; if (o.x < -40) o.destroy(); } });
 
     ArenaHUD.setScore(this.score);
     ArenaHUD.setTimer(100 - (this.elapsed / 55 * 100));

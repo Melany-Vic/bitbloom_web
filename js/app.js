@@ -506,7 +506,7 @@ function finishLevel(id, won, starsEarned, message){
     <img src="assets/characters/bit.png" class="mission-avatar" alt="Bit">
     <h2>${won ? '¡Nivel superado!' : 'Inténtalo de nuevo'}</h2>
     <p>${message}</p>
-    ${won ? `<div class="modal-stars">${starsHtml}</div>` : ''}
+    ${won ? `<div class="modal-stars">${starsHtml}</div><img src="assets/items/reward_crate.png" class="result-crate" alt="Cofre de recompensa">` : ''}
     <p style="margin-top:-6px;">Puntos obtenidos: <strong class="accent-gold">${State.levelScore}</strong>${coinsEarned ? ` &nbsp;·&nbsp; Monedas: <strong class="accent-gold">🪙 ${coinsEarned}</strong>` : ''}</p>
     ${teaser ? `<div class="modal-controls">${teaser}</div>` : ''}
     ${isFinalWin ? `<div class="modal-controls">🎓 Ya completaste las seis misiones. ¡Es hora de repetir la evaluación y ver cuánto aprendiste!</div>` : ''}

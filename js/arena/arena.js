@@ -23,9 +23,9 @@ const ARENA_GAMES = [
   { key:'tunnel',   name:'Túnel de la Red',            icon:'🚇', char:'data',
     desc:'Cambiá de carril para esquivar el malware y atrapar solo los paquetes correctos.',
     factory:() => new ArenaTunnelScene(), coins:35 },
-  { key:'boss',     name:'Asalto al Corruptor',        icon:'👹', char:'bit',
-    desc:'El desafío final: juntá herramientas y derrotá al Corruptor saltando sobre él.',
-    factory:() => new ArenaBossScene(), coins:50 },
+  { key:'energy',   name:'Carga de Volt',             icon:'⚡', char:'volt',
+    desc:'Vuela con Volt, recoge baterías y evita los obstáculos para llenar la batería al 100%.',
+    factory:() => new ArenaVoltScene(), coins:50 },
 ];
 
 /* ---------- Personaje elegido en la tienda + items compartidos ---------- */
@@ -188,6 +188,10 @@ function addArenaTouchControls(scene, opts){
       <div class="arena-touch-btn" id="atDown">▼</div>
       <div class="arena-touch-btn" id="atUp">▲</div>
     `;
+  } else if (opts.holdMode){
+    /* Carga de Volt: un solo botón grande a la derecha (mantener para subir) */
+    wrap.classList.add('lane');
+    wrap.innerHTML = `<div class="arena-touch-spacer"></div><div class="arena-touch-btn big" id="atUp">⚡</div>`;
   } else if (opts.horizontalOnly){
     wrap.innerHTML = `
       <div class="arena-touch-btn" id="atLeft">◀</div>
@@ -260,6 +264,7 @@ function arenaGameOver(won, score, message){
     <img src="assets/characters/${g.char}.png" class="mission-avatar" alt="">
     <h2>${won ? '¡Desafío superado!' : 'No lo lograste esta vez'}</h2>
     <p>${message}</p>
+    ${won ? '<img src="assets/items/reward_crate.png" class="result-crate" alt="Cofre de recompensa">' : ''}
     <p>Puntos: <strong class="accent-cyan">${score}</strong> &nbsp;·&nbsp; Monedas ganadas: <strong class="accent-gold">🪙 ${coinsEarned}</strong></p>
     <div class="modal-actions">
       <button class="modal-btn" id="arenaBackBtn">Volver a la Arena</button>

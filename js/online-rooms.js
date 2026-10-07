@@ -18,7 +18,7 @@ const ONLINE_ROOM_ACTIVITIES = [
   { key:'assembly', name:'🧩 Ensamblaje Bajo Presión' },
   { key:'pixel',    name:'🎨 Taller de Píxeles' },
   { key:'tunnel',   name:'🚇 Túnel de la Red' },
-  { key:'boss',     name:'👹 Asalto al Corruptor' },
+  { key:'energy',   name:'⚡ Carga de Volt' },
 ];
 
 let onlineRoom = { active:false, code:null, isHost:false, unsubRoom:null, unsubChat:null, data:null };

@@ -127,7 +127,7 @@ async function saveProgress(){
   // 2) Base de datos (si está disponible)
   try {
     if (!AppStorage || !AppStorage.set) return;
-    await AppStorage.set(progressKey(), JSON.stringify(data), false);
+    await AppStorage.set(progressKey(), JSON.stringify(data), true);  // por nombre de usuario: se puede recuperar desde otro dispositivo
   } catch (e) {
     // Sin conexión a la base de datos: queda la copia local.
   }
@@ -158,7 +158,8 @@ async function loadProgress(){
   if (local) best = local;
   try {
     if (AppStorage && AppStorage.get){
-      const result = await AppStorage.get(progressKey(), false);
+      let result = await AppStorage.get(progressKey(), true);
+      if (!result || !result.value) result = await AppStorage.get(progressKey(), false);   // cuentas antiguas (guardado privado)
       if (result && result.value){
         const remote = JSON.parse(result.value);
         if (!best || (remote.savedAt || 0) >= (best.savedAt || 0)) best = remote;
@@ -188,4 +189,65 @@ function resetLocalState(){
   State.skin = 'bit';
   const acc = document.getElementById('bitAccessory');
   if (acc) acc.classList.add('hidden');
+}
+
+
+/* =========================================================
+   USUARIOS Y CONTRASEÑAS
+   - El nombre de usuario es ÚNICO: se comprueba en la base de datos
+     compartida (todos los dispositivos) y en este dispositivo.
+   - La contraseña nunca se guarda: solo un "hash" (huella) con sal.
+   ========================================================= */
+const LS_USERS = 'bitbloom-users';
+function getLocalUsers(){ return lsGet(LS_USERS) || {}; }
+
+function randomSalt(){
+  const a = new Uint8Array(12);
+  (window.crypto || window.msCrypto).getRandomValues(a);
+  return Array.from(a).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function sha256Hex(str){
+  try {
+    if (window.crypto && crypto.subtle){
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+  } catch (e) { /* cae al método simple */ }
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < str.length; i++){
+    const ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return 'f' + (h2 >>> 0).toString(16).padStart(8, '0') + (h1 >>> 0).toString(16).padStart(8, '0');
+}
+function hashPassword(password, salt){ return sha256Hex(salt + ':' + password + ':bitbloom'); }
+
+/* Devuelve el registro de un usuario (base de datos o copia local) o null */
+async function fetchUserRecord(name){
+  const slug = slugifyProfileName(name);
+  let rec = null;
+  try {
+    if (AppStorage && AppStorage.get){
+      const r = await AppStorage.get('bitbloom-user-' + slug, true);
+      if (r && r.value) rec = JSON.parse(r.value);
+    }
+  } catch (e) { /* sin conexión */ }
+  if (!rec) rec = getLocalUsers()[slug] || null;
+  return rec;
+}
+async function saveUserRecord(rec){
+  const slug = slugifyProfileName(rec.name);
+  const users = getLocalUsers(); users[slug] = rec; lsSet(LS_USERS, users);
+  try {
+    if (AppStorage && AppStorage.set) await AppStorage.set('bitbloom-user-' + slug, JSON.stringify(rec), true);
+  } catch (e) { /* queda la copia local */ }
+}
+async function buildUserRecord(name, role, password){
+  const salt = randomSalt();
+  return { name, role, salt, hash: await hashPassword(password, salt), createdAt: Date.now() };
+}
+async function checkPassword(rec, password){
+  return !!rec && rec.hash === await hashPassword(password, rec.salt);
 }

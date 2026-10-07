@@ -14,7 +14,8 @@ function ArenaRunnerScene(){
 
   preload(){
     arenaLoadPlayer(this, 'run');
-    arenaLoadItems(this, ['coin', 'bit_coin', 'xp_crystal', 'checkpoint', 'portal']);
+    arenaLoadItems(this, ['coin', 'bit_coin', 'xp_crystal', 'checkpoint', 'portal', 'reward_crate']);
+    ['ice', 'spikes', 'flames', 'saw', 'mace', 'spring'].forEach(k => this.load.image('ob_' + k, `assets/obstacles/${k}.png`));
     ['bug', 'virus', 'glitch', 'lag'].forEach(k => this.load.image(k, `assets/enemies/${k}.png`));
   }
 
@@ -96,6 +97,7 @@ function ArenaRunnerScene(){
       this._sw = null;
     });
 
+    this.springs = [];
     this.obstacles = this.physics.add.group();
     this.collectibles = this.physics.add.group();
     this.physics.add.overlap(this.player, this.obstacles, this.hitObstacle, null, this);
@@ -112,9 +114,9 @@ function ArenaRunnerScene(){
   }
 
   /* ---------- Creación de objetos ---------- */
-  addEnemy(x, key, flying){
+  addEnemy(x, key, flying, h){
     const o = this.physics.add.sprite(x, flying ? this.groundY - 44 : this.groundY + 2, key).setOrigin(0.5, 1).setDepth(4);
-    o.setScale((flying ? 50 : 54) / o.height);
+    o.setScale((h || (flying ? 50 : 54)) / o.height);
     const bw = o.width * 0.55, bh = o.height * 0.6;
     o.body.setSize(bw, bh); o.body.setOffset((o.width - bw) / 2, o.height - bh - o.height * 0.08);
     this.obstacles.add(o);
@@ -122,17 +124,15 @@ function ArenaRunnerScene(){
     if (flying) this.tweens.add({ targets:o, scaleX:o.scaleX * 1.08, scaleY:o.scaleY * 0.94, duration:260, yoyo:true, repeat:-1 });
     return o;
   }
-  addCrates(x, n){
-    for (let i = 0; i < n; i++){
-      const r = this.add.rectangle(x + i * 30, this.groundY - 21, 28, 42, 0xff4d8f).setStrokeStyle(2, 0xffb3d1).setDepth(4);
-      this.physics.add.existing(r);
-      this.obstacles.add(r);
-      r.body.setAllowGravity(false); r.body.setImmovable(true);
-    }
+  addSpring(x){
+    const sp = this.add.image(x, this.groundY + 2, 'ob_spring').setOrigin(0.5, 1).setDepth(3);
+    sp.setScale(64 / sp.width);
+    this.springs.push(sp);
+    return sp;
   }
   addCollectible(x, y, kind){
-    const key = kind === 'bit' ? 'it_bit_coin' : kind === 'crystal' ? 'it_xp_crystal' : 'it_coin';
-    const h = kind === 'bit' ? 40 : kind === 'crystal' ? 46 : 28;
+    const key = kind === 'bit' ? 'it_bit_coin' : kind === 'crystal' ? 'it_xp_crystal' : kind === 'crate' ? 'it_reward_crate' : 'it_coin';
+    const h = kind === 'bit' ? 40 : kind === 'crystal' ? 46 : kind === 'crate' ? 38 : 28;
     const c = this.physics.add.sprite(x, y, key).setDepth(4);
     c.setScale(h / c.height);
     c.kind = kind;
@@ -151,23 +151,38 @@ function ArenaRunnerScene(){
   spawnPattern(secs){
     const X = 880, G = this.groundY, r = Math.random();
     const hardOk = secs > 8;
-    if (r < 0.36){
-      this.addEnemy(X, Math.random() < 0.5 ? 'bug' : 'virus', false);
+    const pick = arr => Phaser.Utils.Array.GetRandom(arr);
+    if (r < 0.26){
+      const k = pick(['bug', 'virus']);
+      this.addEnemy(X, k, false);
       if (Math.random() < 0.6) this.coinArc(X - 52, 5, G - 54, 80);
-    } else if (r < 0.58){
-      const n = rand(1, 3);
-      this.addCrates(X, n);
-      if (Math.random() < 0.6) this.coinArc(X - 40, 5, G - 56, 86);
-    } else if (r < 0.80 && hardOk){
-      this.addEnemy(X, Math.random() < 0.5 ? 'lag' : 'glitch', true);       // pasar por abajo
+    } else if (r < 0.42){
+      this.addEnemy(X, 'ob_spikes', false, 38);                // pinchos
+      this.coinArc(X - 50, 5, G - 56, 86);
+    } else if (r < 0.54){
+      this.addEnemy(X, 'ob_ice', false, 54);                   // bloques de hielo
+      if (Math.random() < 0.6) this.coinArc(X - 40, 5, G - 60, 86);
+    } else if (r < 0.64 && hardOk){
+      const f = this.addEnemy(X, 'ob_flames', false, 62);      // llamas
+      this.tweens.add({ targets:f, alpha:0.6, duration:220, yoyo:true, repeat:-1 });
+      this.coinArc(X - 40, 5, G - 60, 90);
+    } else if (r < 0.78 && hardOk){
+      const k = pick(['lag', 'glitch', 'ob_saw', 'ob_mace']);   // voladores: deslizarse
+      const o = this.addEnemy(X, k, true, k === 'ob_mace' ? 52 : 50);
+      if (k === 'ob_saw') this.tweens.add({ targets:o, angle:360, duration:500, repeat:-1 });
       this.coinArc(X - 40, 4, G - 20, 0);
-    } else if (r < 0.92 && secs > 18){
+    } else if (r < 0.86){
+      this.addSpring(X);                                       // trampolín: coins arriba
+      this.coinArc(X + 20, 6, G - 170, 40);
+      this.addCollectible(X + 120, G - 190, Math.random() < 0.5 ? 'bit' : 'crate');
+    } else if (r < 0.93 && secs > 18){
       this.addEnemy(X, 'bug', false);
-      this.addEnemy(X + 300, 'glitch', true);
+      this.addEnemy(X + 300, 'ob_saw', true);
     } else {
       const high = Math.random() < 0.5;
       this.coinArc(X, 6, high ? G - 120 : G - 22, high ? 40 : 0);
       if (Math.random() < 0.35) this.addCollectible(X + 220, G - 90, 'bit');
+      else if (Math.random() < 0.15) this.addCollectible(X + 220, G - 60, 'crate');
     }
   }
 
@@ -192,8 +207,9 @@ function ArenaRunnerScene(){
 
   collectItem(player, item){
     const k = item.kind;
-    this.popText(item.x, item.y - 10, k === 'bit' ? '+50' : k === 'crystal' ? '¡Escudo XP!' : '+10', k === 'crystal' ? '#4fd6ff' : '#ffd23f');
+    this.popText(item.x, item.y - 10, k === 'bit' ? '+50' : k === 'crate' ? '+100' : k === 'crystal' ? '¡Escudo XP!' : '+10', k === 'crystal' ? '#4fd6ff' : '#ffd23f');
     if (k === 'coin') this.score += 10;
+    else if (k === 'crate') this.score += 100;
     else if (k === 'bit') this.score += 50;
     else if (k === 'crystal'){
       this.shieldUntil = this.time.now + 5000;
@@ -287,6 +303,16 @@ function ArenaRunnerScene(){
     const move = o => { if (o && o.active){ o.x -= dx; if (o.x < -120) o.destroy(); } };
     this.obstacles.getChildren().slice().forEach(move);
     this.collectibles.getChildren().slice().forEach(move);
+    for (let i = this.springs.length - 1; i >= 0; i--){
+      const sp = this.springs[i];
+      sp.x -= dx;
+      if (sp.x < -120){ sp.destroy(); this.springs.splice(i, 1); continue; }
+      if (Math.abs(sp.x - this.player.x) < 34 && this.player.y >= this.groundY - 40 && body.velocity.y >= 0 && onGround){
+        this.player.setVelocityY(-900);
+        this.tweens.add({ targets:sp, scaleY:sp.scaleY * 0.55, duration:90, yoyo:true });
+        beep('correct');
+      }
+    }
 
     if (this.checkpoint){
       this.checkpoint.x -= dx;

@@ -48,12 +48,12 @@ function logoutProfile(){
   };
 }
 
-/* Entrar a una cuenta que ya existe en este dispositivo */
-async function enterAccount(acc){
+/* Entrar a una cuenta ya verificada (contraseña correcta) */
+async function enterAccount(rec){
   resetLocalState();
-  State.profile = { name: acc.name, role: acc.role };
+  State.profile = { name: rec.name, role: rec.role };
   await loadProgress();
-  State.profile = { name: acc.name, role: acc.role };
+  State.profile = { name: rec.name, role: rec.role };
   setActiveAccount(State.profile);
   registerDeviceAccount(State.profile);
   refreshProfileUI();
@@ -61,95 +61,167 @@ async function enterAccount(acc){
   goMenu();
 }
 
+/* Pantalla de cuentas: "Entrar" (usuario + contraseña) / "Crear cuenta" (usuario único + contraseña)
+   y, con la sesión iniciada, "Tu perfil" (cambiar rol o contraseña; el usuario no se puede cambiar). */
+let profileTab = 'login';
 async function showProfileScreen(mode){
   showScreen('#screenProfile');
   bitHide();
-  // En "edit" vuelve al menú; en "onboarding" también se puede volver al menú.
   $('#btnProfileBack').classList.remove('hidden');
-  $('.screen-title', $('#screenProfile')).textContent = mode === 'edit' ? 'Tu perfil' : 'Cuentas';
+  $('.screen-title', $('#screenProfile')).textContent = mode === 'edit' ? 'Tu perfil' : 'Cuenta';
   const wrap = $('#profileWrap');
-  const current = State.profile || { name:'', role:'estudiante' };
-  const accounts = getDeviceAccounts()
-    .slice().sort((a, b) => (b.lastPlayed || 0) - (a.lastPlayed || 0));
+  const accounts = getDeviceAccounts().slice().sort((a, b) => (b.lastPlayed || 0) - (a.lastPlayed || 0));
 
-  const accountsHtml = (mode === 'onboarding' && accounts.length) ? `
-    <div class="account-list-box">
-      <label class="profile-label">Cuentas en este dispositivo</label>
-      <div class="account-list">
-        ${accounts.map((a, i) => `
-          <button class="account-row" data-idx="${i}">
-            <span class="account-avatar">${a.role === 'profesor' ? '🧑‍🏫' : '🎓'}</span>
-            <span class="account-name">${escapeHtml(a.name)}</span>
-            <span class="account-role">${a.role === 'profesor' ? 'Profesor/a' : 'Estudiante'}</span>
-            <span class="account-go">Entrar ▶</span>
-          </button>`).join('')}
-      </div>
-      <div class="account-divider"><span>o crea una cuenta nueva</span></div>
+  /* ---------- Editar perfil ---------- */
+  if (mode === 'edit'){
+    const cur = State.profile || { name:'', role:'estudiante' };
+    wrap.innerHTML = `
+      <img src="${'assets/skins/' + currentSkin() + '.png'}" class="mission-avatar" alt="" style="margin:0 auto 12px; height:90px; width:auto;">
+      <div class="profile-form">
+        <label class="profile-label">Nombre de usuario</label>
+        <input type="text" class="profile-input" value="${escapeHtml(cur.name)}" disabled>
+        <label class="profile-label">Soy...</label>
+        <div class="profile-role-buttons">
+          <button class="profile-role-btn ${cur.role === 'estudiante' ? 'selected' : ''}" data-role="estudiante">🎓 Estudiante</button>
+          <button class="profile-role-btn ${cur.role === 'profesor' ? 'selected' : ''}" data-role="profesor">🧑‍🏫 Profesor/a</button>
+        </div>
+        <label class="profile-label">Nueva contraseña <span class="profile-opt">(opcional)</span></label>
+        <input type="password" id="profilePassInput" class="profile-input" maxlength="40" placeholder="Déjalo vacío para no cambiarla" autocomplete="new-password">
+        <div class="profile-error hidden" id="profileError"></div>
+        <button class="modal-btn primary profile-save-btn" id="profileSaveBtn">Guardar ▶</button>
+      </div>`;
+    let role = cur.role;
+    $$('.profile-role-btn', wrap).forEach(btn => btn.addEventListener('click', () => {
+      role = btn.dataset.role;
+      $$('.profile-role-btn', wrap).forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }));
+    $('#profileSaveBtn').addEventListener('click', async () => {
+      const err = $('#profileError');
+      const np = $('#profilePassInput').value;
+      if (np && np.length < 4){ err.textContent = 'La contraseña debe tener al menos 4 caracteres.'; err.classList.remove('hidden'); return; }
+      let rec = await fetchUserRecord(cur.name);
+      if (!rec) rec = await buildUserRecord(cur.name, role, np || randomSalt());   // cuenta antigua sin contraseña
+      rec.role = role;
+      if (np){ rec.salt = randomSalt(); rec.hash = await hashPassword(np, rec.salt); }
+      await saveUserRecord(rec);
+      State.profile = { name: cur.name, role };
+      refreshProfileUI();
+      await saveProgress();
+      goMenu();
+    });
+    return;
+  }
+
+  /* ---------- Entrar / Crear cuenta ---------- */
+  if (!accounts.length && profileTab === 'login') profileTab = 'register';
+  const accountsHtml = accounts.length ? `
+    <div class="account-list">
+      ${accounts.map((a, i) => `
+        <button class="account-row" data-idx="${i}">
+          <img class="account-head" src="assets/heads/bit.png" alt="">
+          <span class="account-name">${escapeHtml(a.name)}</span>
+          <span class="account-role">${a.role === 'profesor' ? 'Profesor/a' : 'Estudiante'}</span>
+          <span class="account-go">Elegir ▶</span>
+        </button>`).join('')}
     </div>` : '';
 
   wrap.innerHTML = `
     <img src="assets/characters/bit.png" class="mission-avatar" alt="Bit" style="margin:0 auto 12px;">
-    <p class="level-hint">${mode === 'onboarding'
-      ? (accounts.length ? 'Elige tu cuenta o crea una nueva.' : '¡Antes de empezar, cuéntame quién eres!')
-      : 'Actualiza tu nombre o tu rol.'}</p>
-    ${accountsHtml}
-    <div class="profile-form">
-      <label class="profile-label">${mode === 'onboarding' ? 'Nombre de la cuenta nueva' : 'Tu nombre'}</label>
-      <input type="text" id="profileNameInput" class="profile-input" maxlength="20" placeholder="Escribe tu nombre" value="${mode === 'edit' ? escapeHtml(current.name) : ''}">
-      <div class="profile-error hidden" id="profileError"></div>
-      <label class="profile-label">Soy...</label>
-      <div class="profile-role-buttons">
-        <button class="profile-role-btn ${current.role === 'estudiante' ? 'selected' : ''}" data-role="estudiante">🎓 Estudiante</button>
-        <button class="profile-role-btn ${current.role === 'profesor' ? 'selected' : ''}" data-role="profesor">🧑‍🏫 Profesor/a</button>
-      </div>
-      <button class="modal-btn primary profile-save-btn" id="profileSaveBtn">${mode === 'onboarding' ? 'Crear cuenta y continuar ▶' : 'Guardar ▶'}</button>
+    <div class="auth-tabs">
+      <button class="auth-tab ${profileTab === 'login' ? 'active' : ''}" data-tab="login">Entrar</button>
+      <button class="auth-tab ${profileTab === 'register' ? 'active' : ''}" data-tab="register">Crear cuenta</button>
     </div>
+    ${profileTab === 'login' ? `
+      <div class="profile-form">
+        ${accountsHtml ? '<label class="profile-label">Cuentas en este dispositivo</label>' + accountsHtml : ''}
+        <label class="profile-label">Nombre de usuario</label>
+        <input type="text" id="authName" class="profile-input" maxlength="20" placeholder="Tu nombre de usuario" autocomplete="username">
+        <label class="profile-label">Contraseña</label>
+        <input type="password" id="authPass" class="profile-input" maxlength="40" placeholder="Tu contraseña" autocomplete="current-password">
+        <div class="profile-error hidden" id="profileError"></div>
+        <button class="modal-btn primary profile-save-btn" id="authSubmit">Entrar ▶</button>
+      </div>` : `
+      <div class="profile-form">
+        <label class="profile-label">Nombre de usuario <span class="profile-opt">(único, nadie más puede usarlo)</span></label>
+        <input type="text" id="authName" class="profile-input" maxlength="20" placeholder="Elige tu nombre de usuario" autocomplete="username">
+        <label class="profile-label">Contraseña <span class="profile-opt">(mínimo 4 caracteres)</span></label>
+        <input type="password" id="authPass" class="profile-input" maxlength="40" placeholder="Crea una contraseña" autocomplete="new-password">
+        <label class="profile-label">Repite la contraseña</label>
+        <input type="password" id="authPass2" class="profile-input" maxlength="40" placeholder="Repite la contraseña" autocomplete="new-password">
+        <label class="profile-label">Soy...</label>
+        <div class="profile-role-buttons">
+          <button class="profile-role-btn selected" data-role="estudiante">🎓 Estudiante</button>
+          <button class="profile-role-btn" data-role="profesor">🧑‍🏫 Profesor/a</button>
+        </div>
+        <div class="profile-error hidden" id="profileError"></div>
+        <button class="modal-btn primary profile-save-btn" id="authSubmit">Crear cuenta y continuar ▶</button>
+      </div>`}
   `;
 
-  $$('.account-row', wrap).forEach(btn => {
-    btn.addEventListener('click', () => enterAccount(accounts[+btn.dataset.idx]));
-  });
-
-  let selectedRole = current.role || 'estudiante';
-  $$('.profile-role-btn', wrap).forEach(btn => {
-    btn.addEventListener('click', () => {
-      selectedRole = btn.dataset.role;
-      $$('.profile-role-btn', wrap).forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-    });
-  });
-
   const showError = (msg) => { const e = $('#profileError'); e.textContent = msg; e.classList.remove('hidden'); };
+  const busy = (on) => { const b = $('#authSubmit'); b.disabled = on; b.textContent = on ? 'Un momento…' : (profileTab === 'login' ? 'Entrar ▶' : 'Crear cuenta y continuar ▶'); };
 
-  $('#profileSaveBtn').addEventListener('click', async () => {
-    const name = $('#profileNameInput').value.trim().slice(0, 20);
-    if (!name){ showError('Escribe un nombre para tu cuenta.'); return; }
-    const sameSlug = State.profile && slugifyProfileName(State.profile.name) === slugifyProfileName(name);
+  $$('.auth-tab', wrap).forEach(t => t.addEventListener('click', () => { profileTab = t.dataset.tab; showProfileScreen('onboarding'); }));
+  $$('.account-row', wrap).forEach(btn => btn.addEventListener('click', () => {
+    $('#authName').value = accounts[+btn.dataset.idx].name;
+    $('#authPass').focus();
+  }));
 
-    if (mode === 'onboarding'){
-      if (deviceAccountExists(name)){
-        showError('Ya existe una cuenta con ese nombre en este dispositivo. Elígela en la lista o usa otro nombre.');
+  if (profileTab === 'login'){
+    const submit = async () => {
+      const name = $('#authName').value.trim(), pass = $('#authPass').value;
+      if (!name || !pass){ showError('Escribe tu nombre de usuario y tu contraseña.'); return; }
+      busy(true);
+      const rec = await fetchUserRecord(name);
+      if (!rec){
+        busy(false);
+        showError(deviceAccountExists(name)
+          ? 'Esta cuenta se creó antes de que existieran las contraseñas. Ve a "Crear cuenta", usa el mismo nombre y elige una contraseña para protegerla (se conserva tu progreso).'
+          : 'No existe ese usuario. Revisa el nombre o crea una cuenta nueva.');
         return;
       }
-      resetLocalState();                       // cuenta nueva = progreso en cero
-      State.profile = { name, role: selectedRole };
-      refreshProfileUI();
-      await saveProgress();
-      startQuiz('pre');
-      return;
-    }
+      if (!(await checkPassword(rec, pass))){ busy(false); showError('Contraseña incorrecta.'); return; }
+      await enterAccount(rec);
+    };
+    $('#authSubmit').addEventListener('click', submit);
+    $('#authPass').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+    return;
+  }
 
-    // Edición del perfil actual
-    if (!sameSlug && deviceAccountExists(name)){
-      showError('Ya existe otra cuenta con ese nombre en este dispositivo.');
+  /* Crear cuenta */
+  let role = 'estudiante';
+  $$('.profile-role-btn', wrap).forEach(btn => btn.addEventListener('click', () => {
+    role = btn.dataset.role;
+    $$('.profile-role-btn', wrap).forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  }));
+  $('#authSubmit').addEventListener('click', async () => {
+    const name = $('#authName').value.trim().slice(0, 20);
+    const p1 = $('#authPass').value, p2 = $('#authPass2').value;
+    if (name.length < 3){ showError('El nombre de usuario debe tener al menos 3 caracteres.'); return; }
+    if (p1.length < 4){ showError('La contraseña debe tener al menos 4 caracteres.'); return; }
+    if (p1 !== p2){ showError('Las contraseñas no coinciden.'); return; }
+    busy(true);
+    const existing = await fetchUserRecord(name);
+    if (existing){
+      busy(false);
+      showError('Ese nombre de usuario ya está en uso. Elige otro distinto.');
       return;
     }
-    const oldName = State.profile ? State.profile.name : null;
-    State.profile = { name, role: selectedRole };
-    if (oldName && !sameSlug) removeDeviceAccount(oldName);  // el nombre cambió: se mueve el progreso
+    // Cuenta antigua de este dispositivo (sin contraseña): se "reclama" y se conserva su progreso
+    const legacy = deviceAccountExists(name);
+    const rec = await buildUserRecord(name, legacy ? (accounts.find(a => slugifyProfileName(a.name) === slugifyProfileName(name)) || {}).role || role : role, p1);
+    await saveUserRecord(rec);
+    if (legacy){
+      await enterAccount(rec);
+      return;
+    }
+    resetLocalState();
+    State.profile = { name: rec.name, role: rec.role };
     refreshProfileUI();
     await saveProgress();
-    goMenu();
+    startQuiz('pre');
   });
 }
 
