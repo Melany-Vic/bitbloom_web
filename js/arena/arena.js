@@ -83,7 +83,7 @@ function openArenaBrief(key){
     <div class="speaker-tag">${info.name.toUpperCase()} · ${info.role}</div>
     <h2>${g.icon} ${g.name}</h2>
     <p>${g.desc}</p>
-    <div class="modal-controls"><b>Controles:</b> Flechas o WASD para mover, ESPACIO o flecha arriba para saltar. En celular: botones en pantalla.</div>
+    <div class="modal-controls"><b>Controles:</b> Flechas o WASD para mover, ESPACIO o flecha arriba para saltar. En celular o tablet: gira el dispositivo en horizontal y usa los botones en pantalla.</div>
     <div class="modal-actions">
       <button class="modal-btn" id="arenaCancel">Cerrar</button>
       <button class="modal-btn primary" id="arenaGo">¡A jugar! ▶</button>
@@ -97,6 +97,7 @@ async function launchArenaGame(key){
   arenaCurrentKey = key;
   const g = ARENA_GAMES.find(x => x.key === key);
   showScreen('#screenArenaGame');
+  enterGameMode(); // aviso/bloqueo horizontal en celular y tablet (se llama antes de cualquier await)
   $('#arenaGameTitle').textContent = g.name.toUpperCase();
   $('#arenaStage').innerHTML = '<div class="arena-loading" id="arenaLoading">Cargando el motor del juego…</div>';
   arenaSetLives(3);
@@ -149,24 +150,40 @@ function addArenaTouchControls(scene, opts){
   const stage = document.getElementById('arenaCanvasBox') || document.getElementById('arenaStage');
   const wrap = document.createElement('div');
   wrap.className = 'arena-touch-controls';
-  wrap.innerHTML = `
-    <div class="arena-touch-left-right">
-      <div class="arena-touch-btn" id="atLeft">◀</div>
-      <div class="arena-touch-btn" id="atRight">▶</div>
-    </div>
-    <div class="arena-touch-btn" id="atJump">⤴</div>
-  `;
+  if (opts.laneMode){
+    wrap.innerHTML = `
+      <div class="arena-touch-updown">
+        <div class="arena-touch-btn" id="atUp">▲</div>
+        <div class="arena-touch-btn" id="atDown">▼</div>
+      </div>
+      <div class="arena-touch-spacer"></div>
+    `;
+  } else {
+    wrap.innerHTML = `
+      <div class="arena-touch-left-right">
+        <div class="arena-touch-btn" id="atLeft">◀</div>
+        <div class="arena-touch-btn" id="atRight">▶</div>
+      </div>
+      <div class="arena-touch-btn" id="atJump">⤴</div>
+    `;
+  }
   stage.appendChild(wrap);
-  scene.touchState = { left:false, right:false, up:false };
+  scene.touchState = { left:false, right:false, up:false, down:false };
   const bind = (id, prop) => {
     const node = wrap.querySelector('#' + id);
-    node.addEventListener('pointerdown', (e) => { e.preventDefault(); scene.touchState[prop] = true; });
-    node.addEventListener('pointerup', () => { scene.touchState[prop] = false; });
-    node.addEventListener('pointerleave', () => { scene.touchState[prop] = false; });
+    if (!node) return;
+    const release = () => { scene.touchState[prop] = false; node.classList.remove('pressed'); };
+    node.addEventListener('pointerdown', (e) => { e.preventDefault(); scene.touchState[prop] = true; node.classList.add('pressed'); });
+    node.addEventListener('pointerup', release);
+    node.addEventListener('pointercancel', release);
+    node.addEventListener('pointerleave', release);
+    node.addEventListener('contextmenu', (e) => e.preventDefault());
   };
   bind('atLeft', 'left');
   bind('atRight', 'right');
   bind('atJump', 'up');
+  bind('atUp', 'up');
+  bind('atDown', 'down');
   scene.events.once('shutdown', () => wrap.remove());
   scene.events.once('destroy', () => wrap.remove());
 }
@@ -176,6 +193,9 @@ function arenaGameOver(won, score, message){
   const coinsEarned = won ? g.coins : Math.round(g.coins * 0.2);
   State.coins += coinsEarned;
   State.score += score;
+  if (!State.arenaBest) State.arenaBest = {};
+  State.arenaBest[arenaCurrentKey] = Math.max(State.arenaBest[arenaCurrentKey] || 0, score);
+  recordActivity('arena', arenaCurrentKey, won, score, 0, coinsEarned);
   saveProgress();
   beep(won ? 'win' : 'lose');
 
@@ -184,6 +204,7 @@ function arenaGameOver(won, score, message){
      mostrar el resultado local de la Arena. */
   if (window.onlineRoom && window.onlineRoom.active){
     reportRoomScore(score);
+    leaveGameMode();
     showModal(`
       <img src="assets/characters/${g.char}.png" class="mission-avatar" alt="">
       <h2>${won ? '¡Desafío superado!' : 'No lo lograste esta vez'}</h2>

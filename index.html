@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
     <title>BitBloom | Tu aventura tecnológica</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Rubik:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -50,9 +50,11 @@
                     <button id="btnArena" class="menu-button">🎮 ARENA DE DESAFÍOS</button>
                     <button id="btnMultiplayer" class="menu-button">👥 MULTIJUGADOR</button>
                     <button id="btnLeaderboard" class="menu-button">🏆 CLASIFICACIÓN</button>
+                    <button id="btnProgress" class="menu-button">📊 SALA DE PROGRESO</button>
                     <button id="btnClassCode" class="menu-button">🏫 CÓDIGO DE CLASE</button>
                     <button id="btnTeacher" class="menu-button hidden">🧑‍🏫 PANEL DEL PROFESOR</button>
                     <button id="btnCredits" class="menu-button">★ CRÉDITOS</button>
+                    <button id="btnLogout" class="menu-button secondary hidden">🚪 CERRAR SESIÓN / CAMBIAR CUENTA</button>
                 </div>
 
                 <p class="version">BITBLOOM v1.0</p>
@@ -75,7 +77,7 @@
     <section id="screenLevels" class="screen hidden">
         <header class="screen-header">
             <button class="btn-icon" id="btnLevelsBack">← VOLVER</button>
-            <h1 class="screen-title">Mapa de <span class="accent-lime">Bit</span>Bloom</h1>
+            <h1 class="screen-title">Mapa de <span class="accent-lime">Bloom</span>Land</h1>
             <div class="header-stats">
                 <button class="btn-icon" id="btnOpenInstructions">❓ Cómo jugar</button>
                 <button class="btn-icon" id="btnOpenShop">🪙 <span id="levelsCoins">0</span></button>
@@ -133,6 +135,16 @@
             <button class="btn-icon" id="btnLeaderboardRefresh">🔄 Actualizar</button>
         </header>
         <div class="leaderboard-wrap" id="leaderboardWrap"></div>
+    </section>
+
+    <!-- ===================== PANTALLA: MI PROGRESO ===================== -->
+    <section id="screenProgress" class="screen hidden">
+        <header class="screen-header">
+            <button class="btn-icon" id="btnProgressBack">← VOLVER</button>
+            <h1 class="screen-title">Mi <span class="accent-lime">Progreso</span></h1>
+            <div></div>
+        </header>
+        <div class="online-room-wrap" id="progressWrap" style="grid-template-columns:1fr; max-width:760px;"></div>
     </section>
 
     <!-- ===================== PANTALLA: MULTIJUGADOR LOCAL ===================== -->
@@ -249,6 +261,12 @@
             <div class="arena-loading" id="arenaLoading">Cargando el motor del juego…</div>
         </div>
     </section>
+
+    <!-- ===================== AVISO: GIRAR A HORIZONTAL (celular / tablet) ===================== -->
+    <div id="arenaRotateHint" class="arena-rotate-hint">
+        <div class="rotate-icon">📱</div>
+        <p>Gira tu celular o tablet en horizontal para jugar con comodidad</p>
+    </div>
 
     <!-- ===================== MODAL: MISIÓN / RESULTADOS ===================== -->
     <div id="modalOverlay" class="modal-overlay hidden">

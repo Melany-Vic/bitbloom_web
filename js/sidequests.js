@@ -64,6 +64,7 @@ function sqFinish(totalRounds){
   const coinsEarned = firstTime ? sq.coins : Math.round(sq.coins * 0.3);
   State.coins += coinsEarned;
   State.sideQuests.add(sq.key);
+  recordActivity('side', sq.key, sqState.correct >= Math.ceil(totalRounds / 2), sqState.correct * 10, 0, coinsEarned);
   saveProgress();
   beep(sqState.correct === totalRounds ? 'win' : 'correct');
   showModal(`

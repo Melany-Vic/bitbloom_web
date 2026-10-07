@@ -35,7 +35,7 @@ function ArenaTunnelScene(){
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
-    addArenaTouchControls(this);
+    addArenaTouchControls(this, { laneMode:true });
     this.laneCooldown = 0;
 
     this.packets = this.physics.add.group({ allowGravity:false });
@@ -115,7 +115,7 @@ function ArenaTunnelScene(){
     this.laneCooldown -= delta;
 
     const up = this.cursors.up.isDown || this.keys.W.isDown || (this.touchState && this.touchState.up);
-    const down = this.cursors.down.isDown || this.keys.S.isDown;
+    const down = this.cursors.down.isDown || this.keys.S.isDown || (this.touchState && this.touchState.down);
     if (this.laneCooldown <= 0){
       if (up && this.laneIndex > 0){ this.laneIndex--; this.laneCooldown = 220; }
       else if (down && this.laneIndex < 2){ this.laneIndex++; this.laneCooldown = 220; }

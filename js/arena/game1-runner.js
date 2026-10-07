@@ -14,16 +14,24 @@ function ArenaRunnerScene(){
   }
 
   create(){
-    this.groundY = 390;
-    this.add.rectangle(400, this.groundY + 30, 900, 60, 0x0d1530).setStrokeStyle(2, 0x233265);
-    this.add.text(20, 16, 'Saltá los obstáculos. ¡Sobreviví 60 segundos!', { fontFamily:'monospace', fontSize:14, color:'#7d93b8' });
+    /* El suelo se sube (antes 340) para que el personaje no quede pegado al
+       borde inferior ni tapado por los controles táctiles. */
+    this.groundY = 310;
+    const groundH = 450 - this.groundY;
+    this.add.rectangle(400, this.groundY + groundH / 2, 900, groundH, 0x0d1530).setStrokeStyle(2, 0x233265);
+    this.add.text(20, 12, 'Saltá los obstáculos. ¡Sobreviví 60 segundos!', { fontFamily:'monospace', fontSize:14, color:'#7d93b8' });
 
-    const groundBody = this.add.rectangle(400, this.groundY + 30, 900, 60, 0x0d1530, 0);
+    const groundBody = this.add.rectangle(400, this.groundY + groundH / 2, 900, groundH, 0x0d1530, 0);
     this.physics.add.existing(groundBody, true);
 
-    this.player = this.physics.add.sprite(120, this.groundY - 50, 'bit');
-    this.player.setDisplaySize(56, 56);
-    this.player.body.setSize(70, 90);
+    /* La imagen de Bit mide 150x177. Antes se aplastaba a 56x56 y la caja de
+       colisión quedaba en la esquina superior, por eso el sprite se hundía en
+       el suelo. Ahora se escala proporcionalmente y la caja queda alineada
+       con los pies (la base de la imagen). */
+    this.player = this.physics.add.sprite(120, this.groundY - 40, 'bit');
+    this.player.setScale(64 / 177);
+    this.player.body.setSize(100, 150);
+    this.player.body.setOffset(25, 27);
     this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, groundBody);
 
@@ -56,7 +64,7 @@ function ArenaRunnerScene(){
     let obj;
     if (isEnemy){
       const key = Math.random() < 0.5 ? 'bug' : 'virus';
-      obj = this.physics.add.sprite(860, this.groundY - 28, key);
+      obj = this.physics.add.sprite(860, this.groundY - 24, key);
       obj.setDisplaySize(48, 48);
     } else {
       obj = this.add.rectangle(860, this.groundY - 20, 28, 40, 0xff4d8f);

@@ -66,6 +66,8 @@ const State = {
   coins: 0,
   shopOwned: new Set(),
   sideQuests: new Set(),
+  arenaBest: {},
+  history: {}, // progreso por día: { 'AAAA-MM-DD': { level:{id:{...}}, arena:{key:{...}}, points, coins } }
   timeBonus: 1,
   onboardingDone: false,
   preQuizScore: null,
@@ -130,6 +132,41 @@ function bitHide(){ $('#bitCompanion').classList.add('hidden'); }
 function showScreen(id){
   $$('.screen').forEach(s => s.classList.add('hidden'));
   $(id).classList.remove('hidden');
+  /* Al salir de una pantalla de juego se desactiva el modo horizontal. */
+  if (id !== '#screenGame' && id !== '#screenArenaGame') leaveGameMode();
+}
+
+/* =========================================================
+   Modo juego horizontal (celular / tablet)
+   - Muestra un aviso para girar el dispositivo si está en vertical.
+   - Intenta pantalla completa + bloqueo de orientación horizontal
+     (funciona en Android/Chrome; en iPhone se usa solo el aviso).
+   ========================================================= */
+function enterGameMode(){
+  document.body.classList.add('in-game');
+  const hint = document.getElementById('arenaRotateHint');
+  if (hint) hint.classList.add('active');
+  try {
+    if (!window.matchMedia('(pointer:coarse)').matches) return;
+    const de = document.documentElement;
+    const fs = (!document.fullscreenElement && de.requestFullscreen) ? de.requestFullscreen() : null;
+    const lock = () => {
+      if (screen.orientation && screen.orientation.lock){
+        screen.orientation.lock('landscape').catch(() => {});
+      }
+    };
+    if (fs && fs.then) fs.then(lock, lock); else lock();
+  } catch (e) { /* no disponible: queda solo el aviso */ }
+}
+function leaveGameMode(){
+  if (!document.body.classList.contains('in-game')) return;
+  document.body.classList.remove('in-game');
+  const hint = document.getElementById('arenaRotateHint');
+  if (hint) hint.classList.remove('active');
+  try {
+    if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+  } catch (e) {}
 }
 
 function goMenu(){
@@ -449,6 +486,7 @@ function finishLevel(id, won, starsEarned, message){
   }
 
   let coinsEarned = 0;
+  recordActivity('level', id, won, State.levelScore, won ? starsEarned : 0, won ? starsEarned * 15 : 0);
   if (won){
     State.stars[id] = Math.max(State.stars[id] || 0, starsEarned);
     if (id === State.unlocked && id < LEVELS.length) State.unlocked = id + 1;
@@ -491,6 +529,7 @@ function finishLevel(id, won, starsEarned, message){
 function launchLevel(id){
   State.currentLevelId = id;
   showScreen('#screenGame');
+  enterGameMode();
   $('#gameStage').innerHTML = '';
   bitHide();
   const initFns = {
@@ -536,10 +575,13 @@ window.addEventListener('DOMContentLoaded', () => {
   $('#btnOpenShop').addEventListener('click', showShop);
   $('#btnShopBack').addEventListener('click', goLevels);
   $('#btnProfileBack').addEventListener('click', goMenu);
+  $('#btnLogout').addEventListener('click', logoutProfile);
   $('#btnMultiplayer').addEventListener('click', openMultiplayerChoice);
   $('#btnMultiplayerBack').addEventListener('click', () => { mpSession = null; goMenu(); });
   $('#btnLeaderboard').addEventListener('click', showLeaderboardScreen);
   $('#btnLeaderboardBack').addEventListener('click', goMenu);
+  $('#btnProgress').addEventListener('click', showProgressScreen);
+  $('#btnProgressBack').addEventListener('click', goMenu);
   $('#btnLeaderboardRefresh').addEventListener('click', renderLeaderboard);
   $('#btnTeacher').addEventListener('click', showTeacherPanel);
   $('#btnTeacherBack').addEventListener('click', goMenu);
@@ -551,6 +593,10 @@ window.addEventListener('DOMContentLoaded', () => {
   $('#btnClassCode').addEventListener('click', showClassCodeScreen);
   $('#btnClassCodeBack').addEventListener('click', goMenu);
   showScreen('#screenMenu');
+
+  /* Recordar la cuenta que estaba activa en este dispositivo (si cerró sesión, no hay ninguna) */
+  const lastActive = getActiveAccount();
+  if (lastActive && lastActive.name) State.profile = { name: lastActive.name, role: lastActive.role || 'estudiante' };
 
   loadProgress().finally(() => {
     $('#menuCoins').textContent = State.coins;
