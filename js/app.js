@@ -431,7 +431,7 @@ function shakeHud(){
 /* Temporizador de nivel (barra + callback al agotarse) */
 function startTimer(seconds, onTick, onEnd){
   stopActiveTimerOnly();
-  seconds = seconds * (State.timeBonus || 1);
+  seconds = seconds * 1.35 * (State.timeBonus || 1);   // +35% de tiempo en todos los niveles del mapa
   const total = seconds * 1000;
   const start = Date.now();
   const fill = $('#timerFill');

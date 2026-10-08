@@ -192,7 +192,7 @@ function ArenaAssemblyScene(){
 
     this.player.setPosition(60, 380);
     this.player.setVelocity(0, 0);
-    this.roundTime = round === 1 ? 100 : 90;
+    this.roundTime = round === 1 ? 140 : 125;
     this.elapsed = 0;
     this.hint.setText(`Ronda ${round}/2 — Recoge las 4 piezas y entra al portal. ¡Los trampolines te lanzan alto!`);
   }

@@ -1068,3 +1068,30 @@ body.in-game .bit-companion{ transform:scale(.7); transform-origin:bottom right;
 .mp-table .leaderboard-name{ flex:1; min-width:0; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .mp-table .leaderboard-score, .mp-table .leaderboard-coins{ flex:none; white-space:nowrap; }
 .mp-table .mp-head{ padding-top:0; padding-bottom:0; }
+
+
+/* =========================================================
+   Botones un poco más grandes en celular/tablet y sin Bit durante los juegos
+   ========================================================= */
+body.in-game .bit-companion{ display:none !important; }
+.arena-touch-btn{ width:48px; height:48px; font-size:18px; }
+.arena-touch-spacer{ width:48px; }
+.arena-touch-controls.lane .arena-touch-btn{ width:56px; height:56px; font-size:21px; }
+@media (pointer:coarse){
+  #screenGame .btn-icon, #screenArenaGame .btn-icon{ padding:8px 14px; font-size:12.5px; }
+  #screenGame .modal-btn{ padding:11px 20px; font-size:13px; }
+  .quiz-opt{ padding:12px 15px; font-size:13.5px; }
+  .l2-opt{ padding:12px 14px; font-size:13.5px; }
+  .l3-btn{ padding:14px 10px; font-size:13.5px; }
+}
+@media (orientation:landscape) and (max-height:520px){
+  .arena-touch-btn{ width:44px; height:44px; font-size:16px; }
+  .arena-touch-spacer{ width:44px; }
+  .arena-touch-controls.lane .arena-touch-btn{ width:50px; height:50px; font-size:19px; }
+  .arena-touch-updown{ gap:8px; }
+  #screenGame .btn-icon, #screenArenaGame .btn-icon{ padding:6px 12px; font-size:11.5px; }
+  #screenGame .modal-btn{ padding:9px 16px; font-size:12px; }
+  .quiz-opt{ padding:10px 13px; font-size:12.5px; }
+  .l2-opt{ padding:10px 12px; font-size:12.5px; }
+  .l3-btn{ padding:11px 9px; font-size:12.5px; }
+}

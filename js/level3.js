@@ -113,6 +113,7 @@ function l3Answer(choice){
     beep('correct');
     if (chip) chip.classList.add('l3-correct');
   } else {
+    recordMistake('hwsw', item.label + ' es ' + (item.cat === 'hardware' ? 'hardware' : 'software'));
     beep('wrong');
     shakeHud();
     if (chip) chip.classList.add('l3-wrong');

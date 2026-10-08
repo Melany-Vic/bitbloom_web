@@ -223,11 +223,11 @@ function ArenaVoltScene(){
     this.chargeBar.setFillStyle(this.charge < 25 ? 0xff4d8f : this.charge < 55 ? 0xffd23f : 0xa4f23c);
     this.chargeText.setText(Math.floor(this.charge) + '%');
     ArenaHUD.setScore(Math.floor(this.score));
-    ArenaHUD.setTimer(100 - secs / 110 * 100);
+    ArenaHUD.setTimer(100 - secs / 150 * 100);
 
     if (this.charge >= 100) this.win();
     else if (this.charge <= 0 && secs > 5) this.lose('Te quedaste sin energía. ¡Recoge más baterías!');
-    else if (secs >= 110) this.lose('Se acabó el tiempo antes de llenar la batería.');
+    else if (secs >= 150) this.lose('Se acabó el tiempo antes de llenar la batería.');
   }
 
   win(){

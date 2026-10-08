@@ -111,6 +111,7 @@ function bindL1Piece(chip, correctKey){
 }
 
 function registerL1Mistake(slot){
+  recordMistake('hardware', 'Colocar la pieza en la ranura ' + String(slot.dataset.key || '').toUpperCase());
   beep('wrong');
   shakeHud();
   slot.classList.add('shake');

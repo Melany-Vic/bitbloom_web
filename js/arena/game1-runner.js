@@ -280,20 +280,20 @@ function ArenaRunnerScene(){
 
     // Aparición de obstáculos / premios
     this.spawnIn -= delta;
-    if (this.spawnIn <= 0 && secs < 53){
+    if (this.spawnIn <= 0 && secs < 66){
       this.spawnPattern(secs);
       this.spawnIn = Math.max(700, Phaser.Math.Between(1000, 1700) * (300 / Math.max(speed, 300)));
     }
     this.crystalIn -= delta;
-    if (this.crystalIn <= 0 && secs < 50){
+    if (this.crystalIn <= 0 && secs < 62){
       this.addCollectible(880, this.groundY - Phaser.Math.Between(70, 120), 'crystal');
       this.crystalIn = Phaser.Math.Between(14000, 20000);
     }
-    if (!this.checkpoint && secs >= 28){
+    if (!this.checkpoint && secs >= 34){
       this.checkpoint = this.add.image(900, this.groundY + 6, 'it_checkpoint').setOrigin(0.5, 1).setDepth(3);
       this.checkpoint.setScale(120 / this.checkpoint.height);
     }
-    if (!this.portal && secs >= 55){
+    if (!this.portal && secs >= 68){
       this.portal = this.add.image(930, this.groundY + 8, 'it_portal').setOrigin(0.5, 1).setDepth(3);
       this.portal.setScale(190 / this.portal.height);
     }
@@ -332,8 +332,8 @@ function ArenaRunnerScene(){
 
     this.score += 5 * dt;
     ArenaHUD.setScore(Math.floor(this.score));
-    ArenaHUD.setTimer(100 - (secs / 58 * 100));
-    if (secs >= 62) this.win();
+    ArenaHUD.setTimer(100 - (secs / 72 * 100));
+    if (secs >= 76) this.win();
   }
 
   dust(n){

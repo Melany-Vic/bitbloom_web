@@ -54,7 +54,7 @@ function ArenaPixelScene(){
     this.drops = this.physics.add.group({ allowGravity:false });
     this.physics.add.overlap(this.player, this.drops, this.onCatch, null, this);
 
-    this.lives = 3; this.score = 0; this.elapsed = 0; this.TOTAL = 100;
+    this.lives = 3; this.score = 0; this.elapsed = 0; this.TOTAL = 140;
     this.invulnerable = false; this.ended = false;
     this.shieldUntil = 0; this.slowUntil = 0;
     ArenaHUD.setLives(this.lives); ArenaHUD.setScore(0); ArenaHUD.setTimer(100);
@@ -181,6 +181,7 @@ function ArenaPixelScene(){
           this.score += 2; this.kill(o); return;             // ya la tenías
         }
         this.kill(o);
+        recordMistake('graficos', 'Mezcla de ' + t.name + ' = ' + t.need.join(' + '));
         this.pop(x, y, '¡Ese color no va!', '#ff4d8f');
         this.loseLife();
         return;

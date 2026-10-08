@@ -75,6 +75,7 @@ function l4PickDef(btn){
       finishLevel(4, true, stars, '¡Reconectaste todas las funciones del sistema operativo!');
     }
   } else {
+    recordMistake('os', term.textContent);
     beep('wrong');
     shakeHud();
     btn.classList.add('wrong');

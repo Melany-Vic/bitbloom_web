@@ -92,6 +92,7 @@ function l2Answer(isCorrect, scenario, btnEl){
     if (btnEl) btnEl.classList.add('correct');
     bitSay('¡Correcto! ' + scenario.explain, 'talk', 2400);
   } else {
+    recordMistake('diag', scenario.symptom);
     beep('wrong');
     shakeHud();
     if (btnEl) btnEl.classList.add('wrong');

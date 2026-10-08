@@ -2,7 +2,7 @@
    ARENA · JUEGO 4 — Túnel de la Red
    3 carriles: cambiar de carril para esquivar malware y
    atrapar solo los paquetes del protocolo objetivo (color)
-   que se muestra arriba. Sobrevivir 55 segundos.
+   que se muestra arriba. Sobrevivir 80 segundos.
    ========================================================= */
 function ArenaTunnelScene(){
   return new (class extends Phaser.Scene {
@@ -12,6 +12,7 @@ function ArenaTunnelScene(){
     arenaLoadPlayer(this);
     arenaLoadItems(this, ['data_box']);
     ['saw', 'spikecube', 'mace'].forEach(k => this.load.image('ob_' + k, `assets/obstacles/${k}.png`));
+    this.load.image('bg_hub', 'assets/items/bg_hub.jpg');
     this.load.image('lag', 'assets/enemies/lag.png');
     this.load.image('glitch', 'assets/enemies/glitch.png');
   }
@@ -26,7 +27,10 @@ function ArenaTunnelScene(){
     ];
     this.target = 0;
 
-    this.lanes.forEach(y => this.add.rectangle(400, y, 780, 4, 0x233265));
+    /* Fondo: centro de control de redes (se oscurece para que se vean los carriles) */
+    this.add.image(0, 0, 'bg_hub').setOrigin(0, 0).setScale(800 / 1024).setDepth(-3);
+    this.add.rectangle(400, 225, 800, 450, 0x050914, 0.55).setDepth(-2);
+    this.lanes.forEach(y => this.add.rectangle(400, y, 780, 4, 0x4fd6ff, 0.55).setDepth(-1));
     this.hint = this.add.text(20, 16, '', { fontFamily:'monospace', fontSize:13, color:'#7d93b8' });
     this.targetText = this.add.text(650, 16, '', { fontFamily:'Arial Black', fontSize:16, color:'#ffffff' });
     this.updateTargetHint();
@@ -104,7 +108,7 @@ function ArenaTunnelScene(){
     const correct = packet.protocolIndex === this.target;
     packet.destroy();
     if (correct){ this.score += 15; beep('correct'); }
-    else this.loseLife();
+    else { recordMistake('redes', 'Protocolos de red (HTTP, FTP, SSH)'); this.loseLife(); }
   }
   hitMalware(player, m){
     m.destroy();
@@ -141,8 +145,8 @@ function ArenaTunnelScene(){
     this.bonus.children.iterate(o => { if (o){ o.x -= dx; if (o.x < -40) o.destroy(); } });
 
     ArenaHUD.setScore(this.score);
-    ArenaHUD.setTimer(100 - (this.elapsed / 55 * 100));
-    if (this.elapsed >= 55) this.win();
+    ArenaHUD.setTimer(100 - (this.elapsed / 80 * 100));
+    if (this.elapsed >= 80) this.win();
   }
 
   win(){

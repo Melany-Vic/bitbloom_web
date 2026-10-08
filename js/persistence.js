@@ -113,6 +113,7 @@ function buildSaveData(){
     arenaBest: State.arenaBest || {},
     skin: State.skin || 'bit',
     realName: State.realName || null,
+    mistakes: State.mistakes || {},
     history: State.history || {},
     savedAt: Date.now(),
   };
@@ -150,6 +151,7 @@ function applySaveData(data){
   State.history = data.history || {};
   State.skin = data.skin || 'bit';
   State.realName = data.realName || null;
+  State.mistakes = data.mistakes || {};
   const acc = document.getElementById('bitAccessory');
   if (acc) acc.classList.toggle('hidden', !State.shopOwned.has('accessory'));
 }
@@ -190,6 +192,7 @@ function resetLocalState(){
   State.history = {};
   State.skin = 'bit';
   State.realName = null;
+  State.mistakes = {};
   const acc = document.getElementById('bitAccessory');
   if (acc) acc.classList.add('hidden');
 }
@@ -253,4 +256,31 @@ async function buildUserRecord(name, role, password){
 }
 async function checkPassword(rec, password){
   return !!rec && rec.hash === await hashPassword(password, rec.salt);
+}
+
+
+/* =========================================================
+   ERRORES POR TEMA — para la sección "Temas para reforzar"
+   ========================================================= */
+const MISTAKE_TOPICS = {
+  hardware: { name:'Hardware: piezas del PC',       icon:'🖥️', level:1 },
+  diag:     { name:'Diagnóstico técnico',           icon:'🩺', level:2 },
+  hwsw:     { name:'Hardware vs Software',          icon:'⚡', level:3 },
+  os:       { name:'Sistemas operativos',           icon:'🧠', level:4 },
+  redes:    { name:'Redes de datos y protocolos',   icon:'🌐', level:5 },
+  prog:     { name:'Programación y algoritmos',     icon:'🤖', level:6 },
+  graficos: { name:'Gráficos: colores RGB',         icon:'🎨', arena:'pixel' },
+  eval:     { name:'Evaluaciones (preguntas generales)', icon:'📝' },
+  misiones: { name:'Misiones secundarias',          icon:'⭐' },
+  actividad:{ name:'Actividades de tu profesor/a',  icon:'🧑‍🏫' },
+};
+function recordMistake(topic, label){
+  if (!State.profile) return;
+  if (!State.mistakes) State.mistakes = {};
+  const t = State.mistakes[topic] || (State.mistakes[topic] = { count:0, items:{}, last:0 });
+  t.count++; t.last = Date.now();
+  const k = String(label || '').replace(/\s+/g, ' ').trim().slice(0, 100);
+  if (k) t.items[k] = (t.items[k] || 0) + 1;
+  const keys = Object.keys(t.items);
+  if (keys.length > 25){ keys.sort((a, b) => t.items[a] - t.items[b]); delete t.items[keys[0]]; }
 }

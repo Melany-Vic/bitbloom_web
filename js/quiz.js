@@ -74,6 +74,7 @@ function quizAnswer(isCorrect, btnEl, item){
     beep('correct');
     btnEl.classList.add('correct');
   } else {
+    recordMistake('eval', item.q);
     beep('wrong');
     btnEl.classList.add('wrong');
   }

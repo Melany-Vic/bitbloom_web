@@ -248,6 +248,7 @@ function classQuizRender(){
         b.disabled = true;
         if (b.textContent === item.options[item.correct]) b.classList.add('correct');
       });
+      if (!opt.correct) recordMistake('actividad', item.q);
       st.answers.push({ q: item.q, ok: !!opt.correct, chosen: opt.text, right: item.options[item.correct] });
       if (opt.correct){ st.correct++; beep('correct'); }
       else { beep('wrong'); btn.classList.add('wrong'); }

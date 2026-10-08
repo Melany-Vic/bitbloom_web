@@ -396,6 +396,32 @@ function showProgressScreen(){
       ${gameRows}
     </div>`;
 
+  /* --- Temas para reforzar (los que más te has equivocado) --- */
+  const mistakes = State.mistakes || {};
+  const topicRows = Object.keys(mistakes)
+    .map(k => ({ key:k, info:MISTAKE_TOPICS[k] || { name:k, icon:'❓' }, t:mistakes[k] }))
+    .filter(r => r.t.count > 0)
+    .sort((a, b) => b.t.count - a.t.count);
+  const maxMistakes = topicRows.length ? topicRows[0].t.count : 1;
+  const reinforce = `
+    <div class="online-panel">
+      <h3 class="prog-h">🎯 Temas para reforzar</h3>
+      ${topicRows.length ? '<p class="prog-note">Estos son los temas en los que más te has equivocado. ¡Practícalos para mejorar!</p>' : '<p class="prog-empty">¡Muy bien! Todavía no hay errores registrados. Cuando te equivoques en algún tema, aparecerá aquí para que lo repases.</p>'}
+      ${topicRows.slice(0, 6).map((r, i) => {
+        const items = Object.keys(r.t.items).sort((a, b) => r.t.items[b] - r.t.items[a]).slice(0, 3);
+        const pct = Math.max(8, Math.round(r.t.count / maxMistakes * 100));
+        const level = r.info.level ? `<button class="modal-btn" data-practice-level="${r.info.level}" style="padding:6px 12px; font-size:11px;">Practicar ▶</button>`
+                    : r.info.arena ? `<button class="modal-btn" data-practice-arena="${r.info.arena}" style="padding:6px 12px; font-size:11px;">Practicar ▶</button>` : '';
+        return `
+        <div class="tr-q">
+          <div class="tr-q-top"><span>${r.info.icon} <b>${i === 0 ? 'Prioridad: ' : ''}${escapeHtml(r.info.name)}</b></span><b class="tr-low">${r.t.count} error${r.t.count === 1 ? '' : 'es'}</b></div>
+          <div class="tr-bar"><div class="tr-bar-fill low" style="width:${pct}%"></div></div>
+          ${items.length ? '<div class="prog-note" style="margin:6px 0 0;">Te cuesta: ' + items.map(x => escapeHtml(x) + ' <small>(×' + r.t.items[x] + ')</small>').join(' · ') + '</div>' : ''}
+          ${level ? '<div style="margin-top:8px;">' + level + '</div>' : ''}
+        </div>`;
+      }).join('')}
+    </div>`;
+
   /* --- Día por día --- */
   const nameOf = (kind, key) => { const g = gameList.find(x => x.kind === kind && x.key === key); return g ? `${g.icon} ${g.name}` : key; };
   const daysHtml = dayKeys.slice().reverse().map((k, idx) => {
@@ -429,5 +455,7 @@ function showProgressScreen(){
       <div class="online-player-row"><span class="p-name">Evaluación final</span><span class="online-status-badge">${State.postQuizScore != null ? State.postQuizScore + '/10' : '—'}</span></div>
     </div>` : '';
 
-  wrap.innerHTML = summary + chart + perGame + daily + quizRow;
+  wrap.innerHTML = summary + chart + reinforce + perGame + daily + quizRow;
+  $$('[data-practice-level]', wrap).forEach(b => b.addEventListener('click', () => openMission(+b.dataset.practiceLevel)));
+  $$('[data-practice-arena]', wrap).forEach(b => b.addEventListener('click', () => openArenaBrief(b.dataset.practiceArena)));
 }

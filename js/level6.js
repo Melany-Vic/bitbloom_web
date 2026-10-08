@@ -154,6 +154,7 @@ function l6Execute(){
 }
 
 function l6RoundFail(msg){
+  recordMistake('prog', 'Ordenar las instrucciones del código');
   setLives(State.lives - 1);
   shakeHud();
   bitSay(msg, 'alarm');

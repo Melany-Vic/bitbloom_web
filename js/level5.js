@@ -181,6 +181,7 @@ function l5RoundRetry(msg){
   if (l5RafId) cancelAnimationFrame(l5RafId);
   if (l5SpawnTimer) clearInterval(l5SpawnTimer);
   stopActiveTimerOnly();
+  recordMistake('redes', (L5_ROUNDS[l5RoundIdx] && L5_ROUNDS[l5RoundIdx].goal) || 'Elementos de una red');
   beep('wrong');
   shakeHud();
   l5TotalRetries++;

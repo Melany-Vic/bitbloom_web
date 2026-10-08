@@ -94,7 +94,7 @@ function sq1Render(){
     btn.addEventListener('click', () => {
       $$('.quiz-opt', box).forEach(b => { b.disabled = true; if (b.textContent === item.name) b.classList.add('correct'); });
       if (opt.name === item.name){ sqState.correct++; beep('correct'); btn.classList.add('correct'); }
-      else { beep('wrong'); btn.classList.add('wrong'); }
+      else { recordMistake('misiones', item.name || item.q || item.label); beep('wrong'); btn.classList.add('wrong'); }
       setTimeout(() => sqFinish(1), 900);
     });
     box.appendChild(btn);
@@ -118,7 +118,7 @@ function sq2Render(){
   const answer = (choice, btnEl) => {
     const correct = choice === item.cat;
     if (correct){ sqState.correct++; beep('correct'); btnEl.classList.add('modal-btn-correct'); }
-    else beep('wrong');
+    else { recordMistake('misiones', item.label + ' es ' + (item.cat === 'hardware' ? 'hardware' : 'software')); beep('wrong'); }
     sqState.round++;
     setTimeout(sq2Render, 500);
   };
@@ -146,7 +146,7 @@ function sq3Render(){
         if (b.textContent === item.options[item.correct]) b.classList.add('correct');
       });
       if (opt.correct){ sqState.correct++; beep('correct'); }
-      else { beep('wrong'); btn.classList.add('wrong'); }
+      else { recordMistake('misiones', item.name || item.q || item.label); beep('wrong'); btn.classList.add('wrong'); }
       sqState.round++;
       setTimeout(sq3Render, 1000);
     });
