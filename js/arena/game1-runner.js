@@ -16,6 +16,7 @@ function ArenaRunnerScene(){
     arenaLoadPlayer(this, 'run');
     arenaLoadItems(this, ['coin', 'bit_coin', 'xp_crystal', 'checkpoint', 'portal', 'reward_crate']);
     ['ice', 'spikes', 'flames', 'saw', 'mace', 'spring'].forEach(k => this.load.image('ob_' + k, `assets/obstacles/${k}.png`));
+    this.load.image('bg_sky', 'assets/items/bg_sky_loop.jpg');
     ['bug', 'virus', 'glitch', 'lag'].forEach(k => this.load.image(k, `assets/enemies/${k}.png`));
   }
 
@@ -60,19 +61,18 @@ function ArenaRunnerScene(){
   }
 
   create(){
-    this.groundY = 310;
+    this.groundY = 342;
     const G = this.groundY;
     this.makeTextures();
 
-    this.add.rectangle(400, 225, 800, 450, 0x070d20);
-    this.stars = this.add.tileSprite(0, 0, 800, 200, 'rn_stars').setOrigin(0, 0);
-    this.city  = this.add.tileSprite(0, G - 170, 800, 170, 'rn_city').setOrigin(0, 0).setAlpha(0.9);
+    /* Fondo: ciudad flotante de BloomLand (se repite sin cortes) */
+    this.sky = this.add.tileSprite(0, 0, 800, 450, 'bg_sky').setOrigin(0, 0);
     this.ground = this.add.tileSprite(0, G, 800, 450 - G, 'rn_ground').setOrigin(0, 0).setDepth(2);
 
     const groundBody = this.add.rectangle(400, G + (450 - G) / 2, 900, 450 - G, 0x000000, 0);
     this.physics.add.existing(groundBody, true);
 
-    this.add.text(16, 10, '↑ saltar  ·  ↓ deslizarse  ·  ¡Llega al portal!', { fontFamily:'monospace', fontSize:13, color:'#7d93b8' }).setDepth(10);
+    this.add.text(16, 10, '↑ saltar  ·  ↓ deslizarse  ·  ¡Llega al portal!', { fontFamily:'monospace', fontSize:13, color:'#ffffff', stroke:'#0a1024', strokeThickness:4 }).setDepth(10);
 
     /* Personaje (origen en los pies para que se apoye bien en el suelo) */
     this.player = this.physics.add.sprite(130, G, 'player').setOrigin(0.5, 1).setDepth(5);
@@ -230,8 +230,7 @@ function ArenaRunnerScene(){
 
     // Paralaje
     this.ground.tilePositionX += dx;
-    this.city.tilePositionX += dx * 0.35;
-    this.stars.tilePositionX += dx * 0.12;
+    this.sky.tilePositionX += dx * 0.18;
 
     const body = this.player.body;
     const onGround = body.blocked.down || body.touching.down;

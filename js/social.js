@@ -15,7 +15,7 @@ function refreshProfileUI(){
   const teacherBtn = $('#btnTeacher');
   const logoutBtn = $('#btnLogout');
   if (State.profile){
-    tag.innerHTML = `<img class="profile-head" src="assets/heads/${currentSkin()}.png" alt=""> ${escapeHtml(State.profile.name)}
+    tag.innerHTML = `<img class="profile-head" src="${skinHeadSrc(currentSkin())}" alt=""> ${escapeHtml(State.profile.name)}
       <button class="profile-edit-link" id="profileEditLink">editar</button>`;
     teacherBtn.classList.toggle('hidden', State.profile.role !== 'profesor');
     $('#profileEditLink').addEventListener('click', () => showProfileScreen('edit'));

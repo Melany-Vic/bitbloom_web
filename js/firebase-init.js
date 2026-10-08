@@ -120,6 +120,38 @@ window.AppStorage = {
     return null;
   },
 
+  /* Lista los documentos cuya clave empieza con `prefix`. Devuelve [{key, value}] */
+  async list(prefix, shared){
+    if (FIREBASE_ENABLED){
+      await _initFirebase();
+      if (_fbDb){
+        try {
+          const col = shared ? _fb.collection(_fbDb, 'shared') : _fb.collection(_fbDb, 'users', _fbUid, 'data');
+          const q = _fb.query(col, _fb.where(_fb.documentId(), '>=', prefix), _fb.where(_fb.documentId(), '<=', prefix + '\uf8ff'));
+          const snap = await _fb.getDocs(q);
+          const out = [];
+          snap.forEach(d => out.push({ key: d.id, value: d.data().value }));
+          return out;
+        } catch (err) {
+          console.warn('BitBloom (Firestore list):', err);
+          return [];
+        }
+      }
+    }
+    if (window.storage && window.storage.list){
+      try {
+        const r = await window.storage.list(prefix, shared);
+        const out = [];
+        for (const k of ((r && r.keys) || [])){
+          const g = await window.storage.get(k, shared);
+          if (g && g.value) out.push({ key:k, value:g.value });
+        }
+        return out;
+      } catch (err) { return []; }
+    }
+    return [];
+  },
+
   async set(key, value, shared){
     if (FIREBASE_ENABLED){
       await _initFirebase();

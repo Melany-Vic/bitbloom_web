@@ -138,6 +138,7 @@ async function joinOnlineRoom(){
 
 function enterRoomLobby(code, isHost, myName){
   onlineRoom.active = true;
+  onlineRoom.launchedRound = undefined; onlineRoom.sbSig = null; onlineRoom.restartedRound = undefined;
   onlineRoom.code = code;
   onlineRoom.isHost = isHost;
   onlineRoom.myName = myName;
@@ -151,8 +152,12 @@ function enterRoomLobby(code, isHost, myName){
     if (!snap.exists()){ leaveOnlineRoom(true); return; }
     onlineRoom.data = snap.data();
     renderRoomLobby();
-    if (onlineRoom.data.status === 'playing' && !onlineRoom.playingNow){
+    /* Cada ronda se lanza una sola vez (se identifica por su número) */
+    const rd = onlineRoom.data.round || 0;
+    if (onlineRoom.data.status === 'playing' && onlineRoom.launchedRound !== rd){
+      onlineRoom.launchedRound = rd;
       onlineRoom.playingNow = true;
+      hideModal();
       launchRoomActivity(onlineRoom.data.activity);
     }
   });
@@ -171,7 +176,7 @@ function renderRoomLobby(){
   const data = onlineRoom.data;
   if (!data) return;
   const uid = FirebaseAPI.uid();
-  const players = Object.entries(data.players || {});
+  const players = Object.entries(data.players || {}).filter(([, p]) => !p.left);
   const modeLabel = data.mode === 'cooperativo' ? '🤝 Cooperativo' : '🏁 Competencia';
   const activityName = (ONLINE_ROOM_ACTIVITIES.find(a => a.key === data.activity) || {}).name || data.activity;
   const allFinished = players.length > 0 && players.every(([, p]) => p.finished);
@@ -235,6 +240,7 @@ function renderRoomLobby(){
   });
 
   renderChatMessages(onlineRoom.lastMsgs || []);
+  maybeShowRoomScoreboard();
 }
 
 function renderChatMessages(msgs){
@@ -264,8 +270,9 @@ async function startRoomActivity(){
   Object.keys(onlineRoom.data.players || {}).forEach(uid => {
     resetPlayers[`players.${uid}.finished`] = false;
     resetPlayers[`players.${uid}.score`] = 0;
+    resetPlayers[`players.${uid}.vote`] = null;
   });
-  await fs.updateDoc(roomRef, { status:'playing', ...resetPlayers });
+  await fs.updateDoc(roomRef, { status:'playing', round: ((onlineRoom.data && onlineRoom.data.round) || 0) + 1, ...resetPlayers });
 }
 async function restartRoomActivity(){
   onlineRoom.playingNow = false;
@@ -299,4 +306,79 @@ function leaveOnlineRoom(silent){
   onlineRoom.data = null;
   onlineRoom.playingNow = false;
   if (!silent) goMenu();
+}
+
+
+/* =========================================================
+   TABLA DE PUNTAJES AL TERMINAR CADA RONDA (salas en vivo)
+   Cuando todos terminan, a todos les aparece quién ganó y la
+   tabla de puntajes. Cada jugador elige "Otra ronda" o "Salir".
+   La ronda nueva empieza cuando todos votaron y alguien quiere seguir.
+   ========================================================= */
+async function voteRoom(vote){
+  const db = FirebaseAPI.db(), fs = FirebaseAPI.fs(), uid = FirebaseAPI.uid();
+  const roomRef = fs.doc(db, 'rooms', onlineRoom.code);
+  const upd = { [`players.${uid}.vote`]: vote };
+  if (vote === 'leave') upd[`players.${uid}.left`] = true;
+  try { await fs.updateDoc(roomRef, upd); } catch (err) { console.warn('voteRoom', err); }
+  if (vote === 'leave'){ onlineRoom.sbSig = null; hideModal(); leaveOnlineRoom(); }
+}
+
+function maybeShowRoomScoreboard(){
+  const data = onlineRoom.data;
+  if (!data) return;
+  const players = Object.entries(data.players || {}).filter(([, p]) => !p.left);
+  const allFinished = data.status === 'playing' && players.length > 0 && players.every(([, p]) => p.finished);
+  if (!allFinished){
+    if (onlineRoom.sbSig){ onlineRoom.sbSig = null; hideModal(); }   // empezó una ronda nueva
+    return;
+  }
+  const uid = FirebaseAPI.uid();
+  const round = data.round || 1;
+  const sig = round + '|' + players.map(([u, p]) => u + ':' + p.score + ':' + (p.vote || '')).join(',');
+  if (sig !== onlineRoom.sbSig){
+    onlineRoom.sbSig = sig;
+    const sorted = players.slice().sort((a, b) => (b[1].score || 0) - (a[1].score || 0));
+    const teamTotal = players.reduce((n, [, p]) => n + (p.score || 0), 0);
+    let banner;
+    if (data.mode === 'cooperativo'){
+      banner = `<div class="mp-winner">🤝 ¡Equipo! Sumaron ⬡ ${teamTotal}</div>`;
+    } else {
+      const top = sorted[0][1].score || 0;
+      const winners = top > 0 ? sorted.filter(([, p]) => (p.score || 0) === top) : [];
+      banner = winners.length === 0 ? '<div class="mp-winner tie">Nadie sumó puntos esta ronda</div>'
+        : winners.length === 1 ? `<div class="mp-winner">🏆 ¡Ganó ${escapeHtml(winners[0][1].name)}!</div>`
+        : `<div class="mp-winner tie">🤝 ¡Empate entre ${winners.map(([, p]) => escapeHtml(p.name)).join(' y ')}!</div>`;
+    }
+    const me = data.players[uid] || {};
+    const voteIcon = v => v === 'again' ? '🔁 quiere otra' : v === 'leave' ? '🚪 sale' : '⏳ pensando…';
+    showModal(`
+      <h2>🏁 Ronda ${round} terminada</h2>
+      ${banner}
+      <div class="leaderboard-list mp-table">
+        ${sorted.map(([u, p], i) => `
+          <div class="leaderboard-row ${u === uid ? 'me' : ''}">
+            <div class="leaderboard-rank">${data.mode !== 'cooperativo' && i === 0 && (p.score || 0) > 0 ? '🏆' : i + 1}</div>
+            <div class="leaderboard-name">${escapeHtml(p.name)}${u === uid ? ' (tú)' : ''}</div>
+            <div class="leaderboard-score">⬡ ${p.score || 0}</div>
+            <div class="mp-wins">${voteIcon(p.vote)}</div>
+          </div>`).join('')}
+      </div>
+      ${me.vote === 'again'
+        ? '<p class="level-hint">Esperando a que los demás elijan…</p>'
+        : '<p class="level-hint">¿Quieres jugar otra ronda?</p>'}
+      <div class="modal-actions">
+        <button class="modal-btn" id="rsLeave">🚪 Salir</button>
+        <button class="modal-btn primary" id="rsAgain" ${me.vote === 'again' ? 'disabled' : ''}>🔁 Otra ronda</button>
+      </div>`);
+    $('#rsLeave').onclick = () => voteRoom('leave');
+    $('#rsAgain').onclick = () => voteRoom('again');
+  }
+  // Cuando todos votaron y alguien quiere seguir, el primero (por id) inicia la ronda nueva
+  const voted = players.every(([, p]) => p.vote);
+  const again = players.filter(([, p]) => p.vote === 'again').map(([u]) => u).sort();
+  if (voted && again.length && again[0] === uid && onlineRoom.restartedRound !== round){
+    onlineRoom.restartedRound = round;
+    restartRoomActivity();
+  }
 }

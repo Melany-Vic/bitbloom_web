@@ -69,6 +69,7 @@ const State = {
   sideQuests: new Set(),
   arenaBest: {},
   skin: 'bit', // personaje equipado (tienda)
+  realName: null, // nombre y apellido reales (actividades del profesor)
   history: {}, // progreso por día: { 'AAAA-MM-DD': { level:{id:{...}}, arena:{key:{...}}, points, coins } }
   timeBonus: 1,
   onboardingDone: false,

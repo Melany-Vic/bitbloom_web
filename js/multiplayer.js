@@ -61,8 +61,8 @@ function mpStart(numPlayers){
   const mode = $('#mpModeButtons .profile-role-btn.selected').dataset.mode;
   const levelId = Number($('#mpLevelSelect').value);
   mpSession = {
-    players: names.map(name => ({ name, turnScore: 0, stars: 0, won: false })),
-    mode, levelId, currentIndex: 0,
+    players: names.map(name => ({ name, turnScore: 0, stars: 0, won: false, wins: 0, total: 0 })),
+    mode, levelId, currentIndex: 0, round: 1,
   };
   mpNextTurn();
 }
@@ -114,39 +114,50 @@ function mpNextTurn(){
 function mpShowResults(){
   const wrap = $('#mpWrap');
   showScreen('#screenMultiplayer');
-  const sorted = [...mpSession.players].sort((a, b) => b.turnScore - a.turnScore);
-  const teamTotal = mpSession.players.reduce((sum, p) => sum + p.turnScore, 0);
+  const S = mpSession;
+  const sorted = [...S.players].sort((a, b) => b.turnScore - a.turnScore);
+  const teamTotal = S.players.reduce((sum, p) => sum + p.turnScore, 0);
+  S.players.forEach(p => { p.total += p.turnScore; });
 
-  if (mpSession.mode === 'competencia'){
-    wrap.innerHTML = `
-      <h2 style="text-align:center;margin-bottom:14px;">🏁 Resultados de la competencia</h2>
-      <div class="leaderboard-list">
-        ${sorted.map((p, i) => `
-          <div class="leaderboard-row ${i === 0 ? 'me' : ''}">
-            <div class="leaderboard-rank">${i === 0 ? '🏆' : i + 1}</div>
-            <div class="leaderboard-name">${p.name}</div>
-            <div class="leaderboard-score">⬡ ${p.turnScore}</div>
-            <div class="leaderboard-coins">${'★'.repeat(p.stars)}${'☆'.repeat(3 - p.stars)}</div>
-          </div>
-        `).join('')}
-      </div>
-      <button class="modal-btn primary profile-save-btn" id="mpBackMenu">Volver al menú</button>
-    `;
+  let banner = '';
+  if (S.mode === 'competencia'){
+    const top = sorted[0].turnScore;
+    const winners = top > 0 ? sorted.filter(p => p.turnScore === top) : [];
+    winners.forEach(p => p.wins++);
+    banner = winners.length === 0
+      ? '<div class="mp-winner tie">Nadie sumó puntos esta ronda</div>'
+      : winners.length === 1
+        ? `<div class="mp-winner">🏆 ¡Ganó ${escapeHtml(winners[0].name)}!</div>`
+        : `<div class="mp-winner tie">🤝 ¡Empate entre ${winners.map(w => escapeHtml(w.name)).join(' y ')}!</div>`;
   } else {
-    wrap.innerHTML = `
-      <h2 style="text-align:center;margin-bottom:14px;">🤝 Resultado del equipo</h2>
-      <p class="level-hint">¡Entre todos sumaron esto jugando en equipo!</p>
-      <div class="mp-team-total">⬡ ${teamTotal}</div>
-      <div class="leaderboard-list">
-        ${mpSession.players.map(p => `
-          <div class="leaderboard-row">
-            <div class="leaderboard-name">${p.name}</div>
-            <div class="leaderboard-score">⬡ ${p.turnScore}</div>
-          </div>
-        `).join('')}
-      </div>
-      <button class="modal-btn primary profile-save-btn" id="mpBackMenu">Volver al menú</button>
-    `;
+    banner = `<div class="mp-winner">🤝 ¡Equipo! Sumaron ⬡ ${teamTotal}</div>`;
   }
+
+  wrap.innerHTML = `
+    <h2 style="text-align:center;margin-bottom:6px;">🏁 Ronda ${S.round} · Tabla de puntajes</h2>
+    ${banner}
+    <div class="leaderboard-list mp-table">
+      <div class="leaderboard-row mp-head"><div class="leaderboard-rank">#</div><div class="leaderboard-name">Jugador</div><div class="leaderboard-score">Ronda</div><div class="leaderboard-coins">Total</div><div class="mp-wins">Victorias</div></div>
+      ${sorted.map((p, i) => `
+        <div class="leaderboard-row ${i === 0 && S.mode === 'competencia' && p.turnScore > 0 ? 'me' : ''}">
+          <div class="leaderboard-rank">${S.mode === 'competencia' && i === 0 && p.turnScore > 0 ? '🏆' : i + 1}</div>
+          <div class="leaderboard-name">${escapeHtml(p.name)} <small>${'★'.repeat(p.stars)}${'☆'.repeat(3 - p.stars)}</small></div>
+          <div class="leaderboard-score">⬡ ${p.turnScore}</div>
+          <div class="leaderboard-coins">⬡ ${p.total}</div>
+          <div class="mp-wins">${S.mode === 'competencia' ? '🏅 ' + p.wins : '—'}</div>
+        </div>`).join('')}
+    </div>
+    <p class="level-hint">¿Quieren jugar otra ronda?</p>
+    <div class="modal-actions">
+      <button class="modal-btn" id="mpBackMenu">🚪 No, salir</button>
+      <button class="modal-btn primary" id="mpAgain">🔁 Otra ronda</button>
+    </div>
+  `;
   $('#mpBackMenu').addEventListener('click', () => { mpSession = null; goMenu(); });
+  $('#mpAgain').addEventListener('click', () => {
+    S.round++;
+    S.currentIndex = 0;
+    S.players.forEach(p => { p.turnScore = 0; p.stars = 0; p.won = false; });
+    mpNextTurn();
+  });
 }

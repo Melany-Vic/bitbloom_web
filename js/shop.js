@@ -19,7 +19,15 @@ const SKINS = [
   { id:'net',   name:'Net',   role:'Especialista en Redes',        cost:80 },
   { id:'code',  name:'Code',  role:'Especialista en Programación', cost:100 },
   { id:'volt',  name:'Volt',  role:'Especialista en Energía',      cost:100 },
+  { id:'nova',  name:'Nova',  role:'Exploradora veloz',            cost:120 },
+  { id:'lupa',  name:'Lupa',  role:'Detective de errores',         cost:120 },
+  { id:'orbit', name:'Orbit', role:'Mini dron explorador',         cost:140 },
+  { id:'buzz',  name:'Buzz',  role:'Dron mensajero alado',         cost:140 },
+  { id:'solda', name:'Solda', role:'Soldadora de circuitos',       cost:160 },
+  { id:'zap',   name:'Zap',   role:'Gato eléctrico veloz',         cost:160 },
 ];
+const HEAD_IDS = ['bit', 'byte', 'bloom', 'pixel', 'code', 'data', 'net', 'volt'];
+function skinHeadSrc(id){ return HEAD_IDS.indexOf(id) >= 0 ? `assets/heads/${id}.png` : `assets/skins/${id}.png`; }
 const SKIN_IDS = SKINS.map(s => s.id);
 
 function ownsSkin(id){ return id === 'bit' || State.shopOwned.has('skin_' + id); }

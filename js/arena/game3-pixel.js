@@ -42,7 +42,7 @@ function ArenaPixelScene(){
     this.player = this.physics.add.sprite(400, 448, 'player').setOrigin(0.5, 1).setDepth(5);
     this.player.body.setAllowGravity(false);
     const fw = this.player.width, fh = this.player.height;
-    this.player.setScale(86 / fh);
+    this.player.setScale(Math.min(86 / fh, 100 / fw));
     this.player.body.setSize(fw * 0.8, fh * 0.45);
     this.player.body.setOffset(fw * 0.1, fh * 0.12);
     this.player.setCollideWorldBounds(true);

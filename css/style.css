@@ -978,7 +978,7 @@ img{ max-width:100%; display:block; }
   background:radial-gradient(circle at 50% 60%, rgba(79,214,255,0.14), transparent 70%); border-radius:var(--radius-sm); }
 .skin-card .skin-img{ max-height:124px; max-width:100%; width:auto; object-fit:contain; filter:drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
 .skin-card.equipped{ border-color:var(--bloom-lime); box-shadow:0 0 18px rgba(164,242,60,0.25); }
-.profile-head{ width:26px; height:auto; vertical-align:middle; margin-right:2px; }
+.profile-head{ height:26px; width:auto; max-width:40px; object-fit:contain; vertical-align:middle; margin-right:2px; }
 .arena-rotate-hint .rotate-sub{ font-family:var(--font-body); font-size:12px; color:var(--text-dim); }
 
 
@@ -1009,3 +1009,62 @@ body.in-game{ position:fixed; inset:0; width:100%; overflow:hidden; overscroll-b
 .profile-opt{ font-weight:400; color:var(--text-faint); font-size:11px; }
 .account-head{ width:26px; height:auto; }
 .profile-input:disabled{ opacity:.6; }
+
+
+/* =========================================================
+   Celular / tablet: encabezados, mapa de BloomLand y niveles
+   ========================================================= */
+.header-stats{ display:flex; align-items:center; gap:8px; flex-wrap:nowrap; }
+@media (max-width:900px), (max-height:520px){
+  .screen-header{ grid-template-columns:auto minmax(0,1fr) auto; padding:8px 12px; gap:8px; }
+  .screen-title{ font-size:clamp(14px, 3.4vw, 22px); line-height:1.15; }
+  .header-stats{ gap:6px; }
+  .header-stats .btn-icon, .header-stats .score-pill{ padding:6px 10px; font-size:11.5px; white-space:nowrap; }
+  .screen-header > .btn-icon{ padding:6px 10px; font-size:11.5px; white-space:nowrap; }
+}
+@media (max-width:560px){
+  .header-stats .lbl, .screen-header > .btn-icon .lbl{ display:none; }
+  .screen-title{ font-size:clamp(13px, 4.2vw, 18px); }
+}
+
+/* Mientras se juega, la pantalla ocupa justo el alto visible y el área de juego se desplaza */
+body.in-game #screenGame{ height:100vh; height:100dvh; min-height:0; overflow:hidden; }
+body.in-game #screenGame .game-stage{ flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; touch-action:pan-y; padding-bottom:max(24px, env(safe-area-inset-bottom)); }
+/* El compañero Bit no tapa el juego en celular horizontal */
+body.in-game .bit-companion{ transform:scale(.7); transform-origin:bottom right; right:10px; bottom:8px; }
+@media (orientation:landscape) and (max-height:520px){
+  body.in-game .bit-bubble{ display:none; }
+  body.in-game .bit-companion{ transform:scale(.5); }
+  .l4-board{ gap:12px; }
+  .l4-col{ gap:6px; }
+  .l4-card{ padding:7px 10px; font-size:11px; line-height:1.25; }
+  .l4-term{ font-size:11px; }
+}
+@media (orientation:portrait) and (max-width:700px){
+  .l4-board{ grid-template-columns:1fr; }
+}
+
+.map-node-side{ z-index:1; } .map-node:not(.map-node-side){ z-index:2; }
+
+.tr-q{ padding:10px 0; border-top:1px solid var(--line); }
+.tr-q:first-of-type{ border-top:none; }
+.tr-q-top{ display:flex; justify-content:space-between; gap:12px; font-size:13px; margin-bottom:6px; }
+.tr-low{ color:var(--alert-magenta); } .tr-ok{ color:var(--bloom-lime); }
+.tr-bar{ height:8px; border-radius:6px; background:var(--line); overflow:hidden; }
+.tr-bar-fill{ height:100%; background:linear-gradient(90deg, var(--circuit-cyan), var(--bloom-lime)); }
+.tr-bar-fill.low{ background:var(--alert-magenta); }
+.tr-flag{ font-size:11.5px; color:var(--spark-gold); margin-top:5px; }
+.tr-miss{ font-size:12px; color:var(--text-hi); padding:6px 8px; border-left:3px solid var(--alert-magenta); background:rgba(255,77,143,.07); border-radius:4px; }
+.tr-miss small{ color:var(--text-dim); }
+.tr-okline{ font-size:12px; color:var(--bloom-lime); }
+
+.mp-winner{ text-align:center; font-family:var(--font-display); font-size:clamp(15px,3.6vw,20px); color:var(--spark-gold); background:rgba(255,210,63,.1); border:1px solid rgba(255,210,63,.35); border-radius:var(--radius-sm); padding:10px 12px; margin:8px 0 12px; }
+.mp-winner.tie{ color:var(--circuit-cyan); background:rgba(79,214,255,.08); border-color:rgba(79,214,255,.3); }
+.mp-wins{ font-size:11.5px; color:var(--text-dim); white-space:nowrap; text-align:right; min-width:70px; }
+.mp-head{ font-size:11px; color:var(--text-dim); background:transparent !important; border:none !important; }
+.mp-table .leaderboard-name small{ color:var(--spark-gold); margin-left:4px; }
+.mp-table .leaderboard-row{ display:flex; align-items:center; gap:10px; }
+.mp-table .leaderboard-rank{ width:30px; text-align:center; flex:none; }
+.mp-table .leaderboard-name{ flex:1; min-width:0; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mp-table .leaderboard-score, .mp-table .leaderboard-coins{ flex:none; white-space:nowrap; }
+.mp-table .mp-head{ padding-top:0; padding-bottom:0; }

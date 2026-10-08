@@ -14,7 +14,7 @@ function ArenaAssemblyScene(){
     arenaLoadPlayer(this);
     arenaLoadItems(this, ['portal', 'diamond', 'tech_chest', 'plat_float', 'plat_ctrl', 'server']);
     ['spikes', 'flames', 'saw', 'mace', 'spring', 'ice'].forEach(k => this.load.image('ob_' + k, `assets/obstacles/${k}.png`));
-    this.load.image('bg_level', 'assets/items/bg_level.jpg');
+    this.load.image('bg_lab', 'assets/items/bg_lab.jpg');
     this.load.image('overclock', 'assets/enemies/overclock.png');
     this.load.image('corrupt', 'assets/enemies/corrupt.png');
     ['cpu', 'ram', 'gpu', 'ssd'].forEach(k => this.load.image(k, `assets/elements/${k}.png`));
@@ -26,8 +26,8 @@ function ArenaAssemblyScene(){
     ArenaHUD.setLives(this.lives); ArenaHUD.setScore(0); ArenaHUD.setTimer(100);
 
     // Fondo
-    const bg = this.add.image(0, 0, 'bg_level').setOrigin(0, 0).setScale(450 / 315);
-    this.add.rectangle(400, 225, 800, 450, 0x050914, 0.5);
+    const bg = this.add.image(0, 0, 'bg_lab').setOrigin(0, 0).setScale(800 / 1024);   // laboratorio de hardware
+    this.add.rectangle(400, 225, 800, 450, 0x050914, 0.18);
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');

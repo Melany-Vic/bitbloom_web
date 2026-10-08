@@ -33,7 +33,7 @@ function ArenaVoltScene(){
     this.add.rectangle(400, 444, 800, 12, 0x0d1530).setStrokeStyle(2, 0x233265).setDepth(2);
 
     this.player = this.add.image(150, 225, 'player').setDepth(6);
-    this.player.setScale(74 / this.player.height);
+    this.player.setScale(Math.min(74 / this.player.height, 86 / this.player.width));
     this.vy = 0;
 
     this.cursors = this.input.keyboard.createCursorKeys();

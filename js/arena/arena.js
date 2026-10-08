@@ -42,7 +42,7 @@ function arenaLoadItems(scene, list){
 function arenaFitPlayer(sprite, h, wFrac, hFrac){
   wFrac = wFrac || 0.5; hFrac = hFrac || 0.8;
   const fw = sprite.width, fh = sprite.height;
-  sprite.setScale(h / fh);
+  sprite.setScale(Math.min(h / fh, (h * 1.15) / fw));   // personajes anchos (alas, patas) no se vuelven enormes
   const bw = fw * wFrac, bh = fh * hFrac;
   sprite.body.setSize(bw, bh);
   sprite.body.setOffset((fw - bw) / 2, fh - bh);
