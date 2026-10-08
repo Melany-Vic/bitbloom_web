@@ -21,9 +21,12 @@ function ArenaTunnelScene(){
     this.lanes = [110, 225, 340];
     this.laneIndex = 1;
     this.protocols = [
-      { name:'HTTP', color:0x4fd6ff, css:'#4fd6ff' },
-      { name:'FTP',  color:0xa4f23c, css:'#a4f23c' },
-      { name:'SSH',  color:0xff4d8f, css:'#ff4d8f' },
+      { name:'HTTP', color:0x4fd6ff, css:'#4fd6ff', desc:'HTTP sirve para ver páginas web.',
+        tasks:['Quieres abrir una página web 🌐', 'Quieres leer las noticias en tu navegador', 'Quieres entrar a una tienda en línea'] },
+      { name:'FTP',  color:0xa4f23c, css:'#a4f23c', desc:'FTP sirve para enviar y recibir archivos.',
+        tasks:['Necesitas enviar un archivo grande a otro computador 📁', 'Quieres subir tus fotos a un servidor', 'Quieres descargar un archivo desde un servidor'] },
+      { name:'SSH',  color:0xff4d8f, css:'#ff4d8f', desc:'SSH permite controlar otro computador a distancia de forma segura.',
+        tasks:['Debes controlar un servidor a distancia, de forma segura 🔐', 'Necesitas entrar de forma segura a otro computador', 'Quieres administrar una máquina remota con seguridad'] },
     ];
     this.target = 0;
 
@@ -31,8 +34,10 @@ function ArenaTunnelScene(){
     this.add.image(0, 0, 'bg_hub').setOrigin(0, 0).setScale(800 / 1024).setDepth(-3);
     this.add.rectangle(400, 225, 800, 450, 0x050914, 0.55).setDepth(-2);
     this.lanes.forEach(y => this.add.rectangle(400, y, 780, 4, 0x4fd6ff, 0.55).setDepth(-1));
-    this.hint = this.add.text(20, 16, '', { fontFamily:'monospace', fontSize:13, color:'#7d93b8' });
-    this.targetText = this.add.text(650, 16, '', { fontFamily:'Arial Black', fontSize:16, color:'#ffffff' });
+    this.add.rectangle(400, 36, 800, 62, 0x050914, 0.7).setDepth(5);
+    this.targetText = this.add.text(20, 10, '', { fontFamily:'Arial Black', fontSize:15, color:'#ffffff', wordWrap:{ width:560 } }).setDepth(6);
+    this.hint = this.add.text(20, 52, '', { fontFamily:'monospace', fontSize:11, color:'#9fb2d6' }).setDepth(6);
+    this.protocols.forEach((p, i) => this.add.text(620, 8 + i * 17, '● ' + p.name, { fontFamily:'Arial Black', fontSize:13, color:p.css }).setDepth(6));
     this.updateTargetHint();
 
     this.player = this.physics.add.sprite(120, this.lanes[this.laneIndex], 'player');
@@ -47,11 +52,13 @@ function ArenaTunnelScene(){
     this.packets = this.physics.add.group({ allowGravity:false });
     this.malware = this.physics.add.group({ allowGravity:false });
     this.bonus = this.physics.add.group({ allowGravity:false });
-    this.physics.add.overlap(this.player, this.bonus, (pl, b) => { b.destroy(); this.score += 40; beep('win'); }, null, this);
+    this.physics.add.overlap(this.player, this.bonus, (pl, b) => { b.destroy(); this.score += 40; arenaCollectChest('data_box'); arenaTeach(this, '📦 ¡Caja de datos!', 'Se abrirá como cofre al terminar.', '#ffd23f'); beep('win'); }, null, this);
     this.physics.add.overlap(this.player, this.packets, this.hitPacket, null, this);
     this.physics.add.overlap(this.player, this.malware, this.hitMalware, null, this);
 
-    this.lives = 3;
+    this.lives = 3 + ARENA_BONUS.lives;
+    this.limit = 80 * ARENA_BONUS.time;
+    this.qs = arenaPickQuestions('redes', 2);
     this.score = 0;
     this.elapsed = 0;
     this.invulnerable = false;
@@ -67,15 +74,16 @@ function ArenaTunnelScene(){
 
   updateTargetHint(){
     const p = this.protocols[this.target];
-    this.targetText.setText(`Objetivo: ${p.name}`);
-    this.targetText.setColor(p.css);
-    this.hint.setText('↑ / ↓ o W / S para cambiar de carril. Atrapá solo el color del objetivo.');
+    if (this.taskIdx == null) this.taskIdx = rand(0, 2);
+    this.targetText.setText(`📡 MISIÓN: ${p.tasks[this.taskIdx]}\n¿Qué protocolo necesitas? Atrapa solo sus paquetes.`);
+    this.hint.setText('▲ ▼ (o W / S) cambian de carril · Si atrapas el protocolo equivocado, la red falla.');
   }
 
   changeTarget(){
     let next = this.target;
     while (next === this.target) next = rand(0, this.protocols.length - 1);
     this.target = next;
+    this.taskIdx = rand(0, 2);
     this.updateTargetHint();
   }
 
@@ -101,14 +109,23 @@ function ArenaTunnelScene(){
       this.physics.add.existing(c);
       c.protocolIndex = this.protocols.indexOf(p);
       this.packets.add(c);
+      c.label = this.add.text(c.x, c.y, p.name, { fontFamily:'Arial Black', fontSize:9, color:'#050914' }).setOrigin(0.5).setDepth(4);
     }
   }
 
   hitPacket(player, packet){
     const correct = packet.protocolIndex === this.target;
+    const tp = this.protocols[this.target], pp = this.protocols[packet.protocolIndex];
+    if (packet.label) packet.label.destroy();
     packet.destroy();
-    if (correct){ this.score += 15; beep('correct'); }
-    else { recordMistake('redes', 'Protocolos de red (HTTP, FTP, SSH)'); this.loseLife(); }
+    if (correct){
+      this.score += 15; beep('correct');
+      arenaTeach(this, `✅ ¡Correcto! ${tp.name}`, tp.desc, tp.css);
+    } else {
+      recordMistake('redes', `Protocolo: ${tp.tasks[this.taskIdx]} → ${tp.name}`);
+      arenaTeach(this, `❌ Era ${tp.name}, no ${pp.name}`, tp.desc, '#ff4d8f');
+      this.loseLife();
+    }
   }
   hitMalware(player, m){
     m.destroy();
@@ -140,13 +157,16 @@ function ArenaTunnelScene(){
 
     const speed = 220 + Math.min(220, this.elapsed * 4);
     const dx = speed * delta / 1000;
-    this.packets.children.iterate(o => { if (o){ o.x -= dx; if (o.x < -40) o.destroy(); } });
+    this.packets.children.iterate(o => { if (o){ o.x -= dx; if (o.label) o.label.x = o.x; if (o.x < -40){ if (o.label) o.label.destroy(); o.destroy(); } } });
     this.malware.children.iterate(o => { if (o){ o.x -= dx; if (o.x < -40) o.destroy(); } });
     this.bonus.children.iterate(o => { if (o){ o.x -= dx; if (o.x < -40) o.destroy(); } });
 
+    /* Preguntas de Net a los 25 s y a los 55 s */
+    if (!this.q1 && this.elapsed >= 25 * ARENA_BONUS.time){ this.q1 = true; arenaQuiz(this, this.qs[0], 'redes', ok => { this.score += ok ? 40 : 0; }); }
+    if (!this.q2 && this.elapsed >= 55 * ARENA_BONUS.time){ this.q2 = true; arenaQuiz(this, this.qs[1], 'redes', ok => { this.score += ok ? 40 : 0; }); }
     ArenaHUD.setScore(this.score);
-    ArenaHUD.setTimer(100 - (this.elapsed / 80 * 100));
-    if (this.elapsed >= 80) this.win();
+    ArenaHUD.setTimer(100 - (this.elapsed / this.limit * 100));
+    if (this.elapsed >= this.limit) this.win();
   }
 
   win(){

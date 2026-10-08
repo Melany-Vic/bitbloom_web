@@ -11,7 +11,7 @@
    ========================================================= */
 
 const ARENA_GAMES = [
-  { key:'runner',   name:'Carrera de Bits',            icon:'🏃', char:'byte',
+  { key:'runner',   name:'Carrera de Bits',            icon:'🏃', char:'bit',
     desc:'Saltá obstáculos y esquivá errores mientras corrés cada vez más rápido.',
     factory:() => new ArenaRunnerScene(), coins:30 },
   { key:'assembly', name:'Ensamblaje Bajo Presión',    icon:'🧩', char:'byte',
@@ -20,7 +20,7 @@ const ARENA_GAMES = [
   { key:'pixel',    name:'Taller de Píxeles',          icon:'🎨', char:'pixel',
     desc:'Atrapá las gotas de luz roja, verde y azul para mezclar el color pedido y pintar el cuadro.',
     factory:() => new ArenaPixelScene(), coins:35 },
-  { key:'tunnel',   name:'Túnel de la Red',            icon:'🚇', char:'data',
+  { key:'tunnel',   name:'Túnel de la Red',            icon:'🚇', char:'net',
     desc:'Cambiá de carril para esquivar el malware y atrapar solo los paquetes correctos.',
     factory:() => new ArenaTunnelScene(), coins:35 },
   { key:'energy',   name:'Carga de Volt',             icon:'⚡', char:'volt',
@@ -47,6 +47,11 @@ function arenaFitPlayer(sprite, h, wFrac, hFrac){
   sprite.body.setSize(bw, bh);
   sprite.body.setOffset((fw - bw) / 2, fh - bh);
 }
+
+/* ---------- Bonos de cofres y cofres recogidos durante el juego ---------- */
+let ARENA_BONUS = { lives:0, time:1 };
+let arenaChestList = [];
+function arenaCollectChest(img){ arenaChestList.push(img || 'reward_crate'); }
 
 let _phaserLoadPromise = null;
 function loadPhaser(){
@@ -106,11 +111,18 @@ function openArenaBrief(key){
     <div class="modal-controls"><b>Controles:</b> Flechas o WASD para mover, ESPACIO o flecha arriba para saltar (en la Carrera, flecha abajo para deslizarte). Puedes tocar o deslizar el dedo en la pantalla. En celular o tablet: gira el dispositivo en horizontal y usa los botones en pantalla.</div>
     <div class="modal-actions">
       <button class="modal-btn" id="arenaCancel">Cerrar</button>
-      <button class="modal-btn primary" id="arenaGo">¡A jugar! ▶</button>
+      ${ARENA_LESSONS[key] ? '<button class="modal-btn" id="arenaLesson">📖 Lección</button>' : ''}
+      <button class="modal-btn primary" id="arenaGo">${ARENA_LESSONS[key] && !(State.lessonsSeen && State.lessonsSeen[key]) ? '📖 Aprender y jugar ▶' : '¡A jugar! ▶'}</button>
     </div>
   `);
   $('#arenaCancel').onclick = hideModal;
-  $('#arenaGo').onclick = () => { hideModal(); launchArenaGame(key); };
+  const lessonBtn = $('#arenaLesson');
+  if (lessonBtn) lessonBtn.onclick = () => startArenaLesson(key, () => openArenaBrief(key));
+  $('#arenaGo').onclick = () => {
+    hideModal();
+    if (ARENA_LESSONS[key] && !(State.lessonsSeen && State.lessonsSeen[key])) startArenaLesson(key, () => launchArenaGame(key));
+    else launchArenaGame(key);
+  };
 }
 
 async function launchArenaGame(key){
@@ -120,7 +132,15 @@ async function launchArenaGame(key){
   enterGameMode(); // aviso/bloqueo horizontal en celular y tablet (se llama antes de cualquier await)
   $('#arenaGameTitle').textContent = g.name.toUpperCase();
   $('#arenaStage').innerHTML = '<div class="arena-loading" id="arenaLoading">Cargando el motor del juego…</div>';
-  arenaSetLives(3);
+  /* Premios guardados de los cofres (no se usan dentro de salas en línea) */
+  ARENA_BONUS = { lives:0, time:1 };
+  arenaChestList = [];
+  if (!(window.onlineRoom && window.onlineRoom.active)){
+    if (consumeInv('extraLives')){ ARENA_BONUS.lives = 1; showToast('❤️ Usaste una vida extra de tus cofres'); }
+    if (consumeInv('extraTime')){ ARENA_BONUS.time = 1.3; showToast('⏱️ Tiempo extra de tus cofres: +30%'); }
+    saveProgress();
+  }
+  arenaSetLives(3 + ARENA_BONUS.lives);
   arenaSetScore(0);
   arenaSetTimer(100);
 
@@ -152,7 +172,7 @@ async function launchArenaGame(key){
 function arenaSetLives(n){
   const box = $('#arenaLives');
   box.innerHTML = '';
-  for (let i = 0; i < 3; i++){
+  for (let i = 0; i < 3 + ARENA_BONUS.lives; i++){
     box.appendChild(el('div', `life ${i < n ? '' : 'lost'}`));
   }
 }
@@ -259,12 +279,12 @@ function arenaGameOver(won, score, message){
     return;
   }
 
+  const showResult = () => {
   showScreen('#screenArena');
   showModal(`
     <img src="assets/characters/${g.char}.png" class="mission-avatar" alt="">
     <h2>${won ? '¡Desafío superado!' : 'No lo lograste esta vez'}</h2>
     <p>${message}</p>
-    ${won ? '<img src="assets/items/reward_crate.png" class="result-crate" alt="Cofre de recompensa">' : ''}
     <p>Puntos: <strong class="accent-cyan">${score}</strong> &nbsp;·&nbsp; Monedas ganadas: <strong class="accent-gold">🪙 ${coinsEarned}</strong></p>
     <div class="modal-actions">
       <button class="modal-btn" id="arenaBackBtn">Volver a la Arena</button>
@@ -273,6 +293,11 @@ function arenaGameOver(won, score, message){
   `);
   $('#arenaBackBtn').onclick = () => { hideModal(); showArena(); };
   $('#arenaRetryBtn').onclick = () => { hideModal(); launchArenaGame(arenaCurrentKey); };
+  };
+  /* Cofres: los recogidos + 1 por ganar */
+  const chests = arenaChestList.slice(); if (won) chests.push('reward_crate');
+  arenaChestList = [];
+  if (chests.length){ showScreen('#screenArena'); openChests(chests, showResult); } else showResult();
 }
 
 function exitArenaGame(){

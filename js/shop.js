@@ -36,7 +36,7 @@ function currentSkin(){ return (State.skin && SKIN_IDS.indexOf(State.skin) >= 0 
 function showShop(){
   showScreen('#screenShop');
   bitHide();
-  $('#shopCoins').textContent = State.coins;
+  refreshCurrencyUI();
   renderShop();
 }
 
@@ -66,6 +66,19 @@ function renderShop(){
   });
 
   const grid = $('#shopGrid');
+  const inv = ensureInv();
+  const chestCard = el('div', 'shop-card', `
+    <div class="shop-icon"><img src="assets/items/reward_crate.png" alt="" style="height:46px;"></div>
+    <div class="shop-name">Cofre sorpresa</div>
+    <div class="shop-desc">Ábrelo para ganar un premio al azar: monedas, diamantes, vidas o tiempo extra.<br><small>Tienes: 💎 ${inv.gems} · ❤️ ${inv.extraLives} · ⏱️ ${inv.extraTime}</small></div>
+    <button class="shop-buy" ${inv.gems < 3 ? 'disabled' : ''}>💎 3</button>`);
+  chestCard.querySelector('.shop-buy').addEventListener('click', () => {
+    const iv = ensureInv();
+    if (iv.gems < 3) return;
+    iv.gems -= 3; saveProgress(); refreshCurrencyUI();
+    openChests(['reward_crate'], renderShop);
+  });
+  grid.appendChild(chestCard);
   SHOP_ITEMS.forEach(item => {
     const owned = State.shopOwned.has(item.key);
     const card = el('div', 'shop-card', `

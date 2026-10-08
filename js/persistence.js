@@ -114,6 +114,8 @@ function buildSaveData(){
     skin: State.skin || 'bit',
     realName: State.realName || null,
     mistakes: State.mistakes || {},
+    inv: State.inv || { gems:0, extraLives:0, extraTime:0 },
+    lessonsSeen: State.lessonsSeen || {},
     history: State.history || {},
     savedAt: Date.now(),
   };
@@ -152,6 +154,8 @@ function applySaveData(data){
   State.skin = data.skin || 'bit';
   State.realName = data.realName || null;
   State.mistakes = data.mistakes || {};
+  State.inv = data.inv || { gems:0, extraLives:0, extraTime:0 };
+  State.lessonsSeen = data.lessonsSeen || {};
   const acc = document.getElementById('bitAccessory');
   if (acc) acc.classList.toggle('hidden', !State.shopOwned.has('accessory'));
 }
@@ -193,6 +197,8 @@ function resetLocalState(){
   State.skin = 'bit';
   State.realName = null;
   State.mistakes = {};
+  State.inv = { gems:0, extraLives:0, extraTime:0 };
+  State.lessonsSeen = {};
   const acc = document.getElementById('bitAccessory');
   if (acc) acc.classList.add('hidden');
 }
@@ -263,6 +269,8 @@ async function checkPassword(rec, password){
    ERRORES POR TEMA — para la sección "Temas para reforzar"
    ========================================================= */
 const MISTAKE_TOPICS = {
+  binario:  { name:'Bits, bytes y sistema binario', icon:'🔢', arena:'runner' },
+  energia:  { name:'Energía y baterías',             icon:'⚡', arena:'energy' },
   hardware: { name:'Hardware: piezas del PC',       icon:'🖥️', level:1 },
   diag:     { name:'Diagnóstico técnico',           icon:'🩺', level:2 },
   hwsw:     { name:'Hardware vs Software',          icon:'⚡', level:3 },

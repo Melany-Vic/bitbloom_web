@@ -1095,3 +1095,33 @@ body.in-game .bit-companion{ display:none !important; }
   .l2-opt{ padding:10px 12px; font-size:12.5px; }
   .l3-btn{ padding:11px 9px; font-size:12.5px; }
 }
+
+/* Cofres y avisos */
+.chest-stage{ position:relative; height:170px; display:flex; align-items:center; justify-content:center; margin:6px 0; }
+.chest-img{ height:130px; width:auto; cursor:pointer; filter:drop-shadow(0 8px 16px rgba(167,139,250,.55)); }
+.chest-img.shake{ animation:chestShake 0.7s ease-in-out infinite; }
+.chest-img.opening{ animation:chestOpen .65s ease-in forwards; }
+.chest-burst{ position:absolute; width:20px; height:20px; border-radius:50%; background:radial-gradient(circle, #fff, #ffd23f 40%, transparent 70%); opacity:0; }
+.chest-burst.on{ animation:chestBurst .65s ease-out forwards; }
+.prize-icon{ font-size:84px; animation:prizePop .55s cubic-bezier(.2,1.6,.4,1) both; }
+@keyframes chestShake{ 0%,100%{ transform:rotate(0);} 20%{ transform:rotate(-6deg);} 40%{ transform:rotate(6deg);} 60%{ transform:rotate(-4deg);} 80%{ transform:rotate(4deg);} }
+@keyframes chestOpen{ 0%{ transform:scale(1);} 60%{ transform:scale(1.25) rotate(0);} 100%{ transform:scale(1.5); opacity:0;} }
+@keyframes chestBurst{ 0%{ transform:scale(1); opacity:.9;} 100%{ transform:scale(14); opacity:0;} }
+@keyframes prizePop{ 0%{ transform:scale(0) rotate(-20deg);} 100%{ transform:scale(1) rotate(0);} }
+.bb-toast{ position:fixed; top:12px; left:50%; transform:translate(-50%,-80px); background:rgba(13,21,48,.96); border:1px solid var(--spark-gold); color:var(--text-hi); padding:9px 16px; border-radius:999px; font-size:13px; z-index:9999; transition:transform .35s; pointer-events:none; }
+.bb-toast.show{ transform:translate(-50%,0); }
+@media (orientation:landscape) and (max-height:520px){ .chest-stage{ height:110px; } .chest-img{ height:90px; } .prize-icon{ font-size:60px; } }
+
+/* Lecciones del robot */
+.lesson{ text-align:center; }
+.lesson .mission-avatar{ margin:0 auto 6px; }
+.lesson-icon{ font-size:44px; line-height:1.1; margin:4px 0; }
+.lesson-text{ font-size:14.5px; line-height:1.55; text-align:left; background:var(--bg-panel-2); border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px 14px; margin:8px 0; }
+.lesson-dots{ display:flex; justify-content:center; gap:6px; margin:8px 0; }
+.lesson-dots span{ width:8px; height:8px; border-radius:50%; background:var(--line); }
+.lesson-dots span.on{ background:var(--circuit-cyan); box-shadow:0 0 8px var(--circuit-cyan); }
+.lesson-skip{ background:none; border:none; color:var(--text-faint); text-decoration:underline; font-size:12px; margin-top:6px; cursor:pointer; }
+@media (orientation:landscape) and (max-height:520px){
+  .lesson .mission-avatar{ width:46px; } .lesson-icon{ font-size:30px; } .lesson-text{ font-size:12.5px; padding:8px 10px; margin:4px 0; }
+  .lesson h2{ font-size:15px; margin:2px 0; }
+}

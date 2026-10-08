@@ -69,6 +69,9 @@ const State = {
   sideQuests: new Set(),
   arenaBest: {},
   skin: 'bit', // personaje equipado (tienda)
+  inv: { gems:0, extraLives:0, extraTime:0 }, // premios de cofres
+  lessonsSeen: {},
+  levelTimeBoost: 1,
   realName: null, // nombre y apellido reales (actividades del profesor)
   history: {}, // progreso por día: { 'AAAA-MM-DD': { level:{id:{...}}, arena:{key:{...}}, points, coins } }
   timeBonus: 1,
@@ -176,7 +179,7 @@ function goMenu(){
   stopActiveTimer();
   showScreen('#screenMenu');
   bitHide();
-  $('#menuCoins').textContent = State.coins;
+  refreshCurrencyUI();
   refreshProfileUI();
 }
 function goLevels(){
@@ -431,7 +434,7 @@ function shakeHud(){
 /* Temporizador de nivel (barra + callback al agotarse) */
 function startTimer(seconds, onTick, onEnd){
   stopActiveTimerOnly();
-  seconds = seconds * 1.35 * (State.timeBonus || 1);   // +35% de tiempo en todos los niveles del mapa
+  seconds = seconds * 1.35 * (State.timeBonus || 1) * (State.levelTimeBoost || 1);   // +35% de tiempo en todos los niveles del mapa
   const total = seconds * 1000;
   const start = Date.now();
   const fill = $('#timerFill');
@@ -459,6 +462,9 @@ function setupLevelHud(id, lives){
   const lv = LEVELS.find(l => l.id === id);
   $('#hudLevelTitle').textContent = `NIVEL ${id} · ${lv.name.toUpperCase()}`;
   State.maxLives = lives + (State.shopOwned.has('extraLife') ? 1 : 0);
+  if (consumeInv('extraLives')){ State.maxLives++; showToast('❤️ Usaste una vida extra de tus cofres'); }
+  State.levelTimeBoost = 1;
+  if (consumeInv('extraTime')){ State.levelTimeBoost = 1.3; showToast('⏱️ Tiempo extra de tus cofres: +30%'); }
   setLives(State.maxLives);
   State.levelScore = 0;
 }
@@ -503,11 +509,12 @@ function finishLevel(id, won, starsEarned, message){
   const isFinalWin = won && id === LEVELS.length;
   const teaser = hasNext ? NEXT_TEASER[nextId] : null;
 
+  const showResults = () => {
   showModal(`
     <img src="assets/characters/bit.png" class="mission-avatar" alt="Bit">
     <h2>${won ? '¡Nivel superado!' : 'Inténtalo de nuevo'}</h2>
     <p>${message}</p>
-    ${won ? `<div class="modal-stars">${starsHtml}</div><img src="assets/items/reward_crate.png" class="result-crate" alt="Cofre de recompensa">` : ''}
+    ${won ? `<div class="modal-stars">${starsHtml}</div>` : ''}
     <p style="margin-top:-6px;">Puntos obtenidos: <strong class="accent-gold">${State.levelScore}</strong>${coinsEarned ? ` &nbsp;·&nbsp; Monedas: <strong class="accent-gold">🪙 ${coinsEarned}</strong>` : ''}</p>
     ${teaser ? `<div class="modal-controls">${teaser}</div>` : ''}
     ${isFinalWin ? `<div class="modal-controls">🎓 Ya completaste las seis misiones. ¡Es hora de repetir la evaluación y ver cuánto aprendiste!</div>` : ''}
@@ -523,7 +530,9 @@ function finishLevel(id, won, starsEarned, message){
   if (retryBtn) retryBtn.onclick = () => { hideModal(); launchLevel(id); };
   if (hasNext) $('#resultNext').onclick = () => { hideModal(); openMission(nextId); };
   if (isFinalWin) $('#resultFinalQuiz').onclick = () => { hideModal(); startQuiz('post'); };
+  };
   saveProgress();
+  if (won) openChests(['reward_crate'], showResults); else showResults();
 }
 
 /* =========================================================

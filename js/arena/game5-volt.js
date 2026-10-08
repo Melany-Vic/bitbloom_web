@@ -41,7 +41,9 @@ function ArenaVoltScene(){
     addArenaTouchControls(this, { holdMode:true });
 
     this.things = [];          // obstáculos y premios activos
-    this.lives = 3; this.charge = 18; this.score = 0; this.elapsed = 0;
+    this.lives = 3 + ARENA_BONUS.lives; this.charge = 18; this.score = 0; this.elapsed = 0;
+    this.limit = 150 * ARENA_BONUS.time;
+    this.qs = arenaPickQuestions('energia', 2);
     this.invulnerable = false; this.ended = false;
     this.spawnIn = 900; this.sparkIn = 0; this.lineIn = 0; this.boxIn = 12000;
     ArenaHUD.setLives(this.lives); ArenaHUD.setScore(0); ArenaHUD.setTimer(100);
@@ -72,9 +74,21 @@ function ArenaVoltScene(){
       box:   { key:'it_energy_box', h:52, gain:25 },
       crate: { key:'it_reward_crate', h:44, gain:10, pts:100 },
       gem:   { key:'it_diamond',   h:28, gain:0, pts:30 },
+      sun:   { emoji:'☀️', gain:10, tt:'☀️ Energía solar', tx:'Es renovable: viene del Sol y no se acaba.' },
+      wind:  { emoji:'🌬️', gain:10, tt:'🌬️ Energía eólica', tx:'Es renovable: se produce con la fuerza del viento.' },
+      water: { emoji:'💧', gain:10, tt:'💧 Energía hidráulica', tx:'Es renovable: se produce con la fuerza del agua.' },
+      oil:   { emoji:'🛢️', gain:2,  tt:'🛢️ Petróleo (no renovable)', tx:'Se agota y contamina: da poca energía limpia.', bad:true },
     };
     const d = map[kind];
-    const o = this.place(d.key, x, y, d.h, 'pickup', { gain:d.gain, pts:d.pts || 0, pk:kind });
+    let o;
+    if (d.emoji){
+      o = this.add.text(x, y, d.emoji, { fontSize:'34px' }).setOrigin(0.5).setDepth(5);
+      o.kind = 'pickup'; Object.assign(o, { gain:d.gain, pts:0, pk:kind, tt:d.tt, tx:d.tx, bad:d.bad });
+      this.things.push(o);
+      this.tweens.add({ targets:o, scale:1.15, duration:420, yoyo:true, repeat:-1 });
+      return o;
+    }
+    o = this.place(d.key, x, y, d.h, 'pickup', { gain:d.gain, pts:d.pts || 0, pk:kind });
     this.tweens.add({ targets:o, scaleX:o.scaleX * 1.1, scaleY:o.scaleY * 1.1, duration:420, yoyo:true, repeat:-1 });
     return o;
   }
@@ -116,6 +130,12 @@ function ArenaVoltScene(){
       const rk = this.hazard('rock', X, y0, 52, 22);
       this.tweens.add({ targets:rk, y:y0 + 160, duration:1800, yoyo:true, repeat:-1, ease:'Sine.inOut' });
       this.pickup('cell', X + 60, 330);
+    } else if (Math.random() < 0.5){                 // fuentes de energía: renovables vs. petróleo
+      const base = Phaser.Math.Between(130, 320);
+      for (let i = 0; i < 4; i++){
+        const kind = Math.random() < 0.35 ? 'oil' : Phaser.Utils.Array.GetRandom(['sun', 'wind', 'water']);
+        this.pickup(kind, X + i * 70, base + Math.sin(i * 1.2) * 50);
+      }
     } else {                                         // ola de baterías
       const base = Phaser.Math.Between(120, 330);
       for (let i = 0; i < 7; i++) this.pickup(i % 3 === 2 ? 'bat' : 'cell', X + i * 40, base + Math.sin(i * 0.9) * 55);
@@ -204,7 +224,11 @@ function ArenaVoltScene(){
           this.score += o.pts + o.gain * 2;
           if (o.gain) this.pop(o.x, o.y - 20, '+' + o.gain + '%');
           else this.pop(o.x, o.y - 20, '+' + o.pts, '#ffd23f');
-          if (o.pk === 'box' || o.pk === 'crate') this.tipText.setText(Phaser.Utils.Array.GetRandom(this.TIPS)), this.time.delayedCall(3500, () => this.tipText && this.tipText.setText(''));
+          if (o.tt) arenaTeach(this, o.tt, o.tx, o.bad ? '#ff4d8f' : '#a4f23c');
+          if (o.pk === 'box' || o.pk === 'crate'){
+            arenaCollectChest(o.pk === 'box' ? 'energy_box' : 'reward_crate');
+            arenaTeach(this, '🎁 ¡Cofre recogido!', Phaser.Utils.Array.GetRandom(this.TIPS), '#ffd23f');
+          }
           beep('correct');
           o.destroy(); this.things.splice(i, 1);
         }
@@ -223,11 +247,13 @@ function ArenaVoltScene(){
     this.chargeBar.setFillStyle(this.charge < 25 ? 0xff4d8f : this.charge < 55 ? 0xffd23f : 0xa4f23c);
     this.chargeText.setText(Math.floor(this.charge) + '%');
     ArenaHUD.setScore(Math.floor(this.score));
-    ArenaHUD.setTimer(100 - secs / 150 * 100);
+    ArenaHUD.setTimer(100 - secs / this.limit * 100);
 
+    if (!this.q1 && this.charge >= 45){ this.q1 = true; arenaQuiz(this, this.qs[0], 'energia', ok => { if (ok) this.charge = Math.min(100, this.charge + 8); }); }
+    if (!this.q2 && this.charge >= 75){ this.q2 = true; arenaQuiz(this, this.qs[1], 'energia', ok => { if (ok) this.charge = Math.min(100, this.charge + 8); }); }
     if (this.charge >= 100) this.win();
     else if (this.charge <= 0 && secs > 5) this.lose('Te quedaste sin energía. ¡Recoge más baterías!');
-    else if (secs >= 150) this.lose('Se acabó el tiempo antes de llenar la batería.');
+    else if (secs >= this.limit) this.lose('Se acabó el tiempo antes de llenar la batería.');
   }
 
   win(){

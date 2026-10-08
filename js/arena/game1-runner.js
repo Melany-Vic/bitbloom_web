@@ -103,7 +103,9 @@ function ArenaRunnerScene(){
     this.physics.add.overlap(this.player, this.obstacles, this.hitObstacle, null, this);
     this.physics.add.overlap(this.player, this.collectibles, this.collectItem, null, this);
 
-    this.lives = 3; this.score = 0; this.elapsed = 0;
+    this.maxLives = 3 + ARENA_BONUS.lives;
+    this.lives = this.maxLives; this.score = 0; this.elapsed = 0;
+    this.qs = arenaPickQuestions('binario', 2);
     this.invulnerable = false; this.ended = false;
     this.shieldUntil = 0;
     this.spawnIn = 1400; this.crystalIn = 11000;
@@ -209,7 +211,7 @@ function ArenaRunnerScene(){
     const k = item.kind;
     this.popText(item.x, item.y - 10, k === 'bit' ? '+50' : k === 'crate' ? '+100' : k === 'crystal' ? '¡Escudo XP!' : '+10', k === 'crystal' ? '#4fd6ff' : '#ffd23f');
     if (k === 'coin') this.score += 10;
-    else if (k === 'crate') this.score += 100;
+    else if (k === 'crate'){ this.score += 100; arenaCollectChest('reward_crate'); }
     else if (k === 'bit') this.score += 50;
     else if (k === 'crystal'){
       this.shieldUntil = this.time.now + 5000;
@@ -318,16 +320,25 @@ function ArenaRunnerScene(){
       if (!this.checkpoint.used && this.checkpoint.x <= this.player.x + 20){
         this.checkpoint.used = true;
         this.checkpoint.setTint(0xa4f23c);
-        if (this.lives < 3){ this.lives++; ArenaHUD.setLives(this.lives); }
-        this.score += 50;
-        this.banner('¡CHECKPOINT!' + (this.lives >= 3 ? '' : ''), '#a4f23c');
         beep('win');
+        /* Checkpoint: pregunta de Bit. Si aciertas, recuperas una vida. */
+        arenaQuiz(this, this.qs[0], 'binario', ok => {
+          this.score += ok ? 60 : 10;
+          if (ok && this.lives < this.maxLives){ this.lives++; ArenaHUD.setLives(this.lives); this.banner('¡CHECKPOINT! +1 vida', '#a4f23c'); }
+          else this.banner(ok ? '¡CHECKPOINT!' : 'Checkpoint guardado', '#a4f23c');
+        });
       }
       if (this.checkpoint.x < -150){ this.checkpoint.destroy(); this.checkpoint = { x:-999, used:true, destroy(){} , setTint(){} }; }
     }
     if (this.portal){
       this.portal.x -= dx;
-      if (this.portal.x <= this.player.x + 25) return this.win();
+      if (this.portal.x <= this.player.x + 25){
+        if (!this.portalAsked){
+          this.portalAsked = true;
+          arenaQuiz(this, this.qs[1], 'binario', ok => { if (ok) this.score += 80; this.win(); });
+        }
+        return;
+      }
     }
 
     this.score += 5 * dt;

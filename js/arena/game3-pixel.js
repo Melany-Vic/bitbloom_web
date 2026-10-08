@@ -13,7 +13,7 @@ function ArenaPixelScene(){
 
   preload(){
     arenaLoadPlayer(this);
-    arenaLoadItems(this, ['coin', 'bit_coin', 'xp_crystal']);
+    arenaLoadItems(this, ['coin', 'bit_coin', 'xp_crystal', 'reward_crate']);
     this.load.image('glitch', 'assets/enemies/glitch.png');
     this.load.image('bug', 'assets/enemies/bug.png');
   }
@@ -54,7 +54,8 @@ function ArenaPixelScene(){
     this.drops = this.physics.add.group({ allowGravity:false });
     this.physics.add.overlap(this.player, this.drops, this.onCatch, null, this);
 
-    this.lives = 3; this.score = 0; this.elapsed = 0; this.TOTAL = 140;
+    this.lives = 3 + ARENA_BONUS.lives; this.score = 0; this.elapsed = 0; this.TOTAL = 140 * ARENA_BONUS.time;
+    this.qs = arenaPickQuestions('graficos', 2);
     this.invulnerable = false; this.ended = false;
     this.shieldUntil = 0; this.slowUntil = 0;
     ArenaHUD.setLives(this.lives); ArenaHUD.setScore(0); ArenaHUD.setTimer(100);
@@ -144,6 +145,8 @@ function ArenaPixelScene(){
       o = this.physics.add.sprite(x, -20, 'it_coin'); o.setScale(30 / o.height); o.kind = 'coin';
     } else if (r < 0.60 + badChance + 0.15 && this.time.now > this.shieldUntil){
       o = this.physics.add.sprite(x, -30, 'it_xp_crystal'); o.setScale(48 / o.height); o.kind = 'crystal';
+    } else if (Math.random() < 0.4){
+      o = this.physics.add.sprite(x, -24, 'it_reward_crate'); o.setScale(42 / o.height); o.kind = 'crate';
     } else {
       o = this.physics.add.sprite(x, -24, 'it_bit_coin'); o.setScale(40 / o.height); o.kind = 'bit';
     }
@@ -188,6 +191,7 @@ function ArenaPixelScene(){
       case 'bad':
         this.kill(o); this.pop(x, y, '¡Píxel muerto!', '#ff4d8f'); this.loseLife(); return;
       case 'coin': this.score += 10; this.pop(x, y, '+10'); beep('correct'); break;
+      case 'crate': this.score += 20; arenaCollectChest('reward_crate'); this.pop(x, y, '¡Cofre!', '#ffd23f'); beep('win'); break;
       case 'bit':  this.score += 40; this.pop(x, y, '+40'); beep('correct'); break;
       case 'crystal':
         this.shieldUntil = this.time.now + 6000;
@@ -207,7 +211,14 @@ function ArenaPixelScene(){
     this.drops.getChildren().slice().forEach(d => this.kill(d));
     this.roundIdx++;
     if (this.roundIdx >= this.targets.length){ this.win(); return; }
-    this.time.delayedCall(450, () => { if (!this.ended) this.startRound(); });
+    const next = () => { if (!this.ended) this.startRound(); };
+    const qi = this.roundIdx === 3 ? 0 : this.roundIdx === 6 ? 1 : -1;
+    if (qi >= 0){
+      /* Pregunta de Pixel a mitad de camino y antes del final */
+      this.time.delayedCall(500, () => arenaQuiz(this, this.qs[qi], 'graficos', ok => { this.score += ok ? 30 : 0; next(); }));
+    } else {
+      this.time.delayedCall(450, next);
+    }
   }
 
   loseLife(){

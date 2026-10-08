@@ -21,7 +21,9 @@ function ArenaAssemblyScene(){
   }
 
   create(){
-    this.lives = 3; this.score = 0; this.round = 1;
+    this.lives = 3 + ARENA_BONUS.lives; this.score = 0; this.round = 1;
+    this.qs = arenaPickQuestions('hardware', 2);
+    this.asking = false;
     this.ended = false; this.invulnerable = false;
     ArenaHUD.setLives(this.lives); ArenaHUD.setScore(0); ArenaHUD.setTimer(100);
 
@@ -192,7 +194,7 @@ function ArenaAssemblyScene(){
 
     this.player.setPosition(60, 380);
     this.player.setVelocity(0, 0);
-    this.roundTime = round === 1 ? 140 : 125;
+    this.roundTime = (round === 1 ? 140 : 125) * ARENA_BONUS.time;
     this.elapsed = 0;
     this.hint.setText(`Ronda ${round}/2 — Recoge las 4 piezas y entra al portal. ¡Los trampolines te lanzan alto!`);
   }
@@ -202,6 +204,14 @@ function ArenaAssemblyScene(){
     item.destroy();
     if (k === 'piece'){
       this.collected++; this.score += 40; beep('correct');
+      const PIECES = {
+        cpu:{ n:'CPU (procesador)', t:'Es el cerebro del PC: ejecuta las instrucciones de los programas.', c:'#ff7a3d' },
+        ram:{ n:'RAM', t:'Memoria rápida y temporal: guarda lo que usas ahora y se borra al apagar.', c:'#4fd6ff' },
+        gpu:{ n:'GPU (tarjeta gráfica)', t:'Dibuja las imágenes y los videos que ves en la pantalla.', c:'#a78bfa' },
+        ssd:{ n:'SSD (almacenamiento)', t:'Guarda tus archivos de forma permanente, aunque apagues el PC.', c:'#a4f23c' },
+      };
+      const info = PIECES[item.texture.key];
+      if (info) arenaTeach(this, `🔧 ${info.n} (${this.collected}/${this.needed})`, info.t, info.c);
       if (this.collected >= this.needed){
         this.portal.setAlpha(1).clearTint();
         this.tweens.add({ targets:this.portal, scale:this.portal.scale * 1.06, duration:500, yoyo:true, repeat:-1 });
@@ -211,7 +221,7 @@ function ArenaAssemblyScene(){
         beep('win');
       }
     } else if (k === 'diamond'){ this.score += 25; beep('correct'); }
-    else if (k === 'chest'){ this.score += 60; beep('win'); }
+    else if (k === 'chest'){ this.score += 60; arenaCollectChest('tech_chest'); beep('win'); arenaTeach(this, '🧰 ¡Cofre técnico!', 'Lo abrirás al terminar el juego.', '#ffd23f'); }
   }
 
   hurt(){
@@ -263,8 +273,14 @@ function ArenaAssemblyScene(){
         : Phaser.Geom.Intersects.RectangleToRectangle(pb, h.rect);
       if (hit){ this.hurt(); break; }
     }
-    if (this.collected >= this.needed && Phaser.Geom.Intersects.RectangleToRectangle(pb, this.portalRect)){
-      this.nextRoundOrWin();
+    if (this.collected >= this.needed && !this.asking && Phaser.Geom.Intersects.RectangleToRectangle(pb, this.portalRect)){
+      /* El portal hace una pregunta sobre hardware antes de dejarte pasar */
+      this.asking = true;
+      arenaQuiz(this, this.qs[this.round - 1], 'hardware', ok => {
+        if (ok) this.score += 40;
+        this.asking = false;
+        this.nextRoundOrWin();
+      });
     }
 
     ArenaHUD.setScore(this.score);
