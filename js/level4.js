@@ -70,6 +70,7 @@ function l4PickDef(btn){
     beep('correct');
     l4Selected = null;
     l4Matched++;
+    { const pr = L4_PAIRS.find(p => p.key === term.dataset.key); if (pr) bitSay('✅ ' + pr.term + ': ' + pr.def, 'talk', 4200); }
     if (l4Matched === L4_PAIRS.length){
       const stars = clamp(State.lives, 1, 3);
       finishLevel(4, true, stars, '¡Reconectaste todas las funciones del sistema operativo!');
@@ -84,7 +85,7 @@ function l4PickDef(btn){
     term.classList.remove('selected');
     l4Selected = null;
     setLives(State.lives - 1);
-    bitSay('Esa conexión no es correcta. ¡Vuelve a intentarlo!', 'alarm');
+    { const pr = L4_PAIRS.find(p => p.key === term.dataset.key); const clue = pr ? pr.def.split(' ').slice(0, 4).join(' ') + '…' : ''; bitSay('Esa conexión no es correcta. Pista para «' + (pr ? pr.term : '') + '»: su función empieza así: «' + clue + '»', 'alarm', 4200); }
     if (State.lives <= 0){
       finishLevel(4, false, 0, 'Se acabaron las vidas. Repasa las funciones del sistema operativo e inténtalo de nuevo.');
     }

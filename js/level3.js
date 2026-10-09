@@ -99,6 +99,40 @@ function l3Next(){
   });
 }
 
+const L3_INFO = {
+  'CPU':'es el cerebro: ejecuta las instrucciones y hace los cálculos.',
+  'Memoria RAM':'guarda datos temporales de lo que estás usando ahora.',
+  'Almacenamiento SSD':'guarda tus archivos de forma permanente y rápida.',
+  'Tarjeta Gráfica':'procesa las imágenes y el video que ves en pantalla.',
+  'Disco Duro':'guarda archivos de forma permanente en discos giratorios.',
+  'Placa Madre':'es la base que conecta todas las piezas entre sí.',
+  'Teclado':'sirve para escribir: es una pieza física de entrada.',
+  'Mouse':'sirve para señalar y hacer clic: es una pieza física de entrada.',
+  'Fuente de Poder':'convierte la electricidad de la pared en energía para el equipo.',
+  'Computadora (PC)':'es el equipo completo que puedes tocar.',
+  'Tarjeta de Red':'permite que el computador se conecte a una red.',
+  'Cable Ethernet':'es un cable físico que lleva datos por la red.',
+  'Procesador de Texto':'es un programa para escribir documentos.',
+  'Editor de Imágenes':'es un programa para retocar y crear imágenes.',
+  'Editor de Video':'es un programa para montar y editar videos.',
+  'Navegador Web':'es un programa para entrar a páginas de Internet.',
+  'Antivirus':'es un programa que protege el equipo de virus.',
+  'App de Mensajería':'es un programa para chatear con otras personas.',
+  'Correo Electrónico':'es un programa/servicio para enviar y recibir mensajes.',
+  'Hoja de Cálculo':'es un programa para hacer tablas y cuentas.',
+  'Reproductor Multimedia':'es un programa que reproduce música y videos.',
+  'Programa de Presentaciones':'es un programa para crear diapositivas.',
+  'Explorador de Archivos':'es un programa para organizar tus carpetas y archivos.',
+  'Base de Datos':'es un software que organiza grandes cantidades de información.',
+  'Editor de Código':'es un programa para escribir código.',
+  'HTML':'es un lenguaje (software) que da estructura a las páginas web.',
+  'CSS':'es un lenguaje (software) que da estilo y color a las páginas web.',
+  'JavaScript':'es un lenguaje de programación que da vida a las páginas web.',
+  'Python':'es un lenguaje de programación fácil de aprender.',
+  'Archivo':'es información guardada digitalmente: no se puede tocar.',
+  'Programas y Aplicaciones':'son el software que usas para hacer tareas.',
+  'Sistema Operativo':'es el software principal que controla el equipo.',
+};
 function l3Answer(choice){
   if (l3Answered) return;
   l3Answered = true;
@@ -112,13 +146,14 @@ function l3Answer(choice){
     addScore(120);
     beep('correct');
     if (chip) chip.classList.add('l3-correct');
+    bitSay('✅ ' + item.label + ' es ' + (item.cat === 'hardware' ? 'HARDWARE' : 'SOFTWARE') + ': ' + (L3_INFO[item.label] || (item.cat === 'hardware' ? 'es una parte física.' : 'es un programa o archivo.')), 'talk', 3000);
   } else {
     recordMistake('hwsw', item.label + ' es ' + (item.cat === 'hardware' ? 'hardware' : 'software'));
     beep('wrong');
     shakeHud();
     if (chip) chip.classList.add('l3-wrong');
     setLives(State.lives - 1);
-    bitSay(`${item.label} es ${item.cat === 'hardware' ? 'HARDWARE' : 'SOFTWARE'}.`, 'alarm', 1500);
+    bitSay('Pista: ¿puedes tocarlo? Si es una pieza física es hardware; si es un programa o archivo que usas en pantalla, es software. Era ' + (item.cat === 'hardware' ? 'HARDWARE' : 'SOFTWARE') + ': ' + (L3_INFO[item.label] || ''), 'alarm', 3600);
     if (State.lives <= 0){
       document.removeEventListener('keydown', l3KeyHandler);
       setTimeout(() => finishLevel(3, false, 0, 'Se acabaron las vidas. Recuerda: si lo puedes tocar es hardware; si es un programa, es software.'), 900);

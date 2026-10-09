@@ -247,8 +247,19 @@ function enterRoomLobby(code, isHost, myName){
   });
 }
 
+/* Enlace que abre el juego y propone unirse a la sala */
+function roomInviteLink(){
+  return location.origin + location.pathname + '?sala=' + onlineRoom.code;
+}
+function roomInviteText(){
+  const d = onlineRoom.data || {};
+  return `🎮 ¡Te invito a jugar BitBloom conmigo! (${ROOM_MODES[d.mode] || 'Multijugador'}) Entra a mi sala con el código ${onlineRoom.code}: ${roomInviteLink()}`;
+}
+function shareRoomWhatsApp(){
+  window.open('https://wa.me/?text=' + encodeURIComponent(roomInviteText()), '_blank');
+}
 function shareRoomCode(){
-  const text = `¡Únete a mi sala de BitBloom! Código: ${onlineRoom.code}`;
+  const text = roomInviteText();
   if (navigator.share){ navigator.share({ title:'BitBloom', text }).catch(() => {}); }
   else if (navigator.clipboard){ navigator.clipboard.writeText(text).then(() => showToast('📋 Código copiado')).catch(() => showToast(text)); }
   else showToast(text);
@@ -315,12 +326,13 @@ function renderRoomLobby(){
       ${canInvite ? `
       <div class="online-panel">
         <h3 style="font-family:var(--font-display); font-size:13px; margin-bottom:8px;">📨 Invitar a un amigo</h3>
-        <p class="level-hint" style="margin:0 0 8px;">Escribe su nombre de usuario de BitBloom: le llegará una invitación.</p>
+        <p class="level-hint" style="margin:0 0 8px;">Dentro del juego: escribe su nombre de usuario (si está en línea, le aparece al instante). O envíala por WhatsApp.</p>
         <div class="online-chat-input-row">
           <input type="text" id="inviteInput" placeholder="Nombre de usuario" maxlength="20">
           <button id="inviteBtn">Invitar</button>
         </div>
         <p class="level-hint" id="inviteMsg" style="margin:6px 0 0;"></p>
+        <button class="modal-btn wa-btn" id="inviteWaBtn">📲 Invitar por WhatsApp</button>
       </div>` : ''}
       ${isTeamMode(data) ? `
       <div class="online-panel">
@@ -388,6 +400,7 @@ function renderRoomLobby(){
   // invitar
   const invBtn = $('#inviteBtn');
   if (invBtn) invBtn.onclick = () => inviteToRoom($('#inviteInput').value);
+  const waBtn = $('#inviteWaBtn'); if (waBtn) waBtn.onclick = shareRoomWhatsApp;
   const invInp = $('#inviteInput');
   if (invInp) invInp.addEventListener('keydown', e => { if (e.key === 'Enter') invBtn.click(); });
 
@@ -717,7 +730,10 @@ async function inviteToRoom(rawName){
   try {
     const ok = await AppStorage.set('invite:' + slug + ':' + onlineRoom.code, JSON.stringify(inv), true);
     if (!ok) throw new Error('no guardado');
-    say(`✅ Invitación enviada a ${rec.name}. Le aparecerá en unos segundos.`);
+    const online = await isUserOnline(name);
+    say(online
+      ? `✅ ${rec.name} está 🟢 en línea: la invitación le aparece en unos segundos dentro del juego.`
+      : `✅ Invitación enviada a ${rec.name}, pero ⚪ no está en línea ahora. Le llegará cuando abra el juego; también puedes avisarle por WhatsApp.`);
     $('#inviteInput').value = '';
   } catch (e) { say('No se pudo enviar la invitación. Inténtalo de nuevo.'); }
 }
@@ -758,6 +774,7 @@ function showInviteModal(inv){
       <button class="modal-btn primary" id="invYes">¡Unirme! ▶</button>
     </div>`);
   const finish = async () => {
+    if (!inv._key) return;
     _dismissInvite(inv._key + ':' + inv.createdAt);
     try { await AppStorage.remove(inv._key, true); } catch (_) {}
   };
@@ -773,11 +790,52 @@ function showInviteModal(inv){
   const obs = setInterval(() => { if (document.getElementById('modalOverlay').classList.contains('hidden')){ _inviteModalOpen = false; clearInterval(obs); } }, 1000);
 }
 
+/* ---------- Presencia ("en línea") ---------- */
+async function sendPresence(){
+  if (!State.profile || document.hidden) return;
+  try { await AppStorage.set('presence:' + slugifyProfileName(State.profile.name), String(Date.now()), true); } catch (_) {}
+}
+async function isUserOnline(name){
+  try {
+    const r = await AppStorage.get('presence:' + slugifyProfileName(name), true);
+    return !!(r && r.value && Date.now() - parseInt(r.value, 10) < 75000);
+  } catch (_) { return false; }
+}
+
+/* ---------- Enlace de invitación (?sala=CODIGO), por ejemplo desde WhatsApp ---------- */
+(function readRoomLink(){
+  try {
+    const code = (new URLSearchParams(location.search).get('sala') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+    if (code.length === 4){
+      sessionStorage.setItem('bb-pending-room', code);
+      history.replaceState(null, '', location.pathname);   // limpia la dirección
+    }
+  } catch (_) {}
+})();
+async function handleRoomLink(){
+  let code = null;
+  try { code = sessionStorage.getItem('bb-pending-room'); } catch (_) {}
+  if (!code || _inviteModalOpen || onlineRoom.active) return;
+  if (!State.profile){
+    if (!handleRoomLink._warned){ handleRoomLink._warned = true; showToast('📲 Inicia sesión o crea tu cuenta para unirte a la sala ' + code); }
+    return;
+  }
+  try { await FirebaseAPI.ready(); } catch (_) {}
+  if (!FirebaseAPI.db()) return;
+  try { sessionStorage.removeItem('bb-pending-room'); } catch (_) {}
+  const fs = FirebaseAPI.fs();
+  const snap = await fs.getDoc(fs.doc(FirebaseAPI.db(), 'rooms', code));
+  if (!snap.exists()){ showToast('La sala ' + code + ' ya no existe.'); return; }
+  const d = snap.data();
+  const host = (d.players && d.players[d.hostUid]) ? d.players[d.hostUid].name : 'Un amigo';
+  showInviteModal({ fromName: host, code, mode: d.mode, activity: d.activity, _key: null, createdAt: Date.now() });
+}
+
 let _invitePoll = null;
 function startInvitePolling(){
   if (_invitePoll) return;
-  setTimeout(checkInvites, 4000);
-  _invitePoll = setInterval(checkInvites, 15000);
+  setTimeout(() => { sendPresence(); checkInvites(); handleRoomLink(); }, 3500);
+  _invitePoll = setInterval(() => { sendPresence(); checkInvites(); handleRoomLink(); }, 10000);   // en línea: la invitación llega en ≤10 s
 }
 
 /* =========================================================

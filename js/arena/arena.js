@@ -133,7 +133,7 @@ async function launchArenaGame(key){
   arenaCurrentKey = key;
   const g = ARENA_GAMES.find(x => x.key === key);
   showScreen('#screenArenaGame');
-  enterGameMode(); // aviso/bloqueo horizontal en celular y tablet (se llama antes de cualquier await)
+  enterGameMode(); document.body.classList.add('in-arena');   // aviso/bloqueo horizontal en celular y tablet (se llama antes de cualquier await)
   $('#arenaGameTitle').textContent = g.name.toUpperCase();
   $('#arenaStage').innerHTML = '<div class="arena-loading" id="arenaLoading">Cargando el motor del juego…</div>';
   /* Premios guardados de los cofres (no se usan dentro de salas en línea) */

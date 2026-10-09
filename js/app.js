@@ -168,7 +168,7 @@ function enterGameMode(){
 }
 function leaveGameMode(){
   if (!document.body.classList.contains('in-game')) return;
-  document.body.classList.remove('in-game');
+  document.body.classList.remove('in-game', 'in-arena');
   if (typeof updateGiftFab === 'function') setTimeout(updateGiftFab, 0);
   document.body.classList.remove('mp-game');
   const hint = document.getElementById('arenaRotateHint');

@@ -93,7 +93,7 @@ function l1Place(chip, slot, correctKey){
     slot.classList.add('pop');
     addScore(100);
     beep('correct');
-    bitSay(partInfo.func, 'talk', 3400);
+    bitSay('✅ ' + partInfo.label + ': ' + partInfo.func, 'talk', 5200);
     l1SectionIndex++;
     $$('.l1-piece').forEach(c => c.classList.remove('selected'));
     if (l1SectionIndex >= L1_PARTS.length){
@@ -141,7 +141,15 @@ function registerL1Mistake(slot){
   slot.classList.add('shake');
   setTimeout(() => slot.classList.remove('shake'), 300);
   setLives(State.lives - 1);
-  bitSay('Esa pieza no va ahí. ¡Fijate bien cuál es la que corresponde a esta ranura!', 'alarm');
+  const L1_HINTS = {
+    cpu:'Pista: busca la pieza que es el cerebro y hace todos los cálculos.',
+    ram:'Pista: es la memoria rápida que guarda datos temporales mientras usas programas.',
+    store:'Pista: es donde se guardan tus archivos aunque apagues la PC.',
+    gpu:'Pista: es la pieza que procesa las imágenes y el video para la pantalla.',
+    psu:'Pista: convierte la electricidad de la pared en energía para los demás componentes.',
+    mobo:'Pista: es la base grande que conecta a todas las demás piezas.',
+  };
+  bitSay('Esa pieza no va ahí. ' + (L1_HINTS[slot.dataset.key] || '¡Fíjate bien en la ranura!'), 'alarm', 4800);
   if (State.lives <= 0){
     finishLevel(1, false, 0, 'Se acabaron las vidas. Repasa las partes internas de una computadora e inténtalo otra vez.');
   }

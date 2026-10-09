@@ -9,18 +9,21 @@ const L5_ROUND_SECONDS = 180; // 3 minutos por ronda
 const L5_ROUNDS = [
   {
     goal: 'Arma la conexión a Internet',
+    explain: 'El módem trae la señal del proveedor, el router la reparte, el cable de red conecta los equipos y la computadora usa Internet.',
     correct: [ {img:'assets/elements/router.png', n:'Router'}, {e:'🔌', n:'Cable de red'}, {e:'📡', n:'Módem'}, {img:'assets/elements/pc.png', n:'Computadora'} ],
     wrong:   [ {img:'assets/enemies/lag.png', n:'Lag'}, {img:'assets/enemies/bug.png', n:'Bug'}, {e:'🥷', n:'Hacker'} ],
     quota: 6, spawnMs: 950, speed: 2.2,
   },
   {
     goal: 'Protege tu cuenta',
+    explain: 'Una contraseña segura, la verificación en 2 pasos, el antivirus y las conexiones seguras protegen tu cuenta. El phishing y los virus intentan robarla.',
     correct: [ {e:'🔐', n:'Contraseña segura'}, {e:'📲', n:'Verificación en 2 pasos'}, {e:'🛡️', n:'Antivirus actualizado'}, {e:'🔒', n:'Conexión segura'} ],
     wrong:   [ {e:'🎣', n:'Enlace de phishing'}, {img:'assets/enemies/virus.png', n:'Virus'}, {img:'assets/enemies/glitch.png', n:'Glitch'} ],
     quota: 6, spawnMs: 820, speed: 2.6,
   },
   {
     goal: 'Envía un archivo por la red',
+    explain: 'El archivo se divide en paquetes de datos; cada uno viaja con una dirección IP hasta el servidor y necesita una conexión estable.',
     correct: [ {img:'assets/elements/pc.png', n:'Servidor'}, {e:'📦', n:'Paquete de datos'}, {e:'🔢', n:'Dirección IP'}, {e:'✅', n:'Conexión estable'} ],
     wrong:   [ {img:'assets/enemies/lag.png', n:'Lag'}, {img:'assets/enemies/bug.png', n:'Bug'}, {img:'assets/enemies/corrupt.png', n:'Corrupt'} ],
     quota: 7, spawnMs: 720, speed: 2.9,
@@ -172,8 +175,8 @@ function l5RoundComplete(){
     const stars = l5TotalRetries === 0 ? 3 : l5TotalRetries <= 2 ? 2 : 1;
     finishLevel(5, true, stars, '¡Reuniste todos los elementos que la red necesitaba en cada misión!');
   } else {
-    bitSay('¡Perfecto! Preparando el siguiente desafío...', 'talk', 1600);
-    setTimeout(() => l5StartRound(1), 1400);
+    bitSay('✅ ¡Perfecto! ' + (L5_ROUNDS[l5RoundIdx - 1].explain || '') , 'talk', 5200);
+    setTimeout(() => l5StartRound(1), 4200);
   }
 }
 
@@ -185,6 +188,7 @@ function l5RoundRetry(msg){
   beep('wrong');
   shakeHud();
   l5TotalRetries++;
-  bitSay(msg, 'alarm', 2200);
-  setTimeout(() => l5StartRound(l5Attempt + 1), 1400);
+  const rr = L5_ROUNDS[l5RoundIdx];
+  bitSay(msg + (rr ? ' Pista: busca ' + rr.correct.map(c => c.n).join(', ') + '.' : ''), 'alarm', 3600);
+  setTimeout(() => l5StartRound(l5Attempt + 1), 3200);
 }

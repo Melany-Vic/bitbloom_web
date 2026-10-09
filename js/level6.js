@@ -137,11 +137,11 @@ function l6Execute(){
           const stars = clamp(State.lives, 1, 3);
           finishLevel(6, true, stars, '¡Programaste correctamente cada proceso! Bit vuelve a casa sano y salvo.');
         } else {
-          bitSay('¡Secuencia perfecta! Preparando el siguiente reto...', 'talk', 1700);
-          setTimeout(l6StartRound, 1500);
+          bitSay('✅ ¡Secuencia perfecta! En «' + L6_ROUNDS[l6RoundIdx - 1].title + '» el orden importa: cada paso depende del anterior.', 'talk', 4200);
+          setTimeout(l6StartRound, 3600);
         }
       } else {
-        l6RoundFail('El orden tenía un error. Observa dónde se detuvo el programa.');
+        l6RoundFail('El orden tenía un error. Observa dónde se detuvo el programa. Pista: el primer paso de «' + L6_ROUNDS[l6RoundIdx].title + '» es: «' + L6_ROUNDS[l6RoundIdx].steps[0] + '».');
       }
       return;
     }
@@ -157,7 +157,7 @@ function l6RoundFail(msg){
   recordMistake('prog', 'Ordenar las instrucciones del código');
   setLives(State.lives - 1);
   shakeHud();
-  bitSay(msg, 'alarm');
+  bitSay(msg, 'alarm', 5200);
   if (State.lives <= 0){
     finishLevel(6, false, 0, 'Se acabaron las vidas. Repasa el orden de los procesos e inténtalo otra vez.');
     return;

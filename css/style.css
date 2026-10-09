@@ -1031,10 +1031,10 @@ body.in-game{ position:fixed; inset:0; width:100%; overflow:hidden; overscroll-b
 body.in-game #screenGame{ height:100vh; height:100dvh; min-height:0; overflow:hidden; }
 body.in-game #screenGame .game-stage{ flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; touch-action:pan-y; padding-bottom:max(24px, env(safe-area-inset-bottom)); }
 /* El compañero Bit no tapa el juego en celular horizontal */
-body.in-game .bit-companion{ transform:scale(.7); transform-origin:bottom right; right:10px; bottom:8px; }
+body.in-game .bit-companion{ transform:scale(.72); transform-origin:bottom left; left:max(8px, env(safe-area-inset-left)); right:auto; bottom:8px; align-items:flex-start; }
 @media (orientation:landscape) and (max-height:520px){
-  body.in-game .bit-bubble{ display:none; }
-  body.in-game .bit-companion{ transform:scale(.5); }
+  body.in-game .bit-bubble{ max-width:min(52vw, 430px); font-size:11.5px; padding:8px 10px; }
+  body.in-game .bit-companion{ transform:scale(.6); }
   .l4-board{ gap:12px; }
   .l4-col{ gap:6px; }
   .l4-card{ padding:7px 10px; font-size:11px; line-height:1.25; }
@@ -1073,7 +1073,7 @@ body.in-game .bit-companion{ transform:scale(.7); transform-origin:bottom right;
 /* =========================================================
    Botones un poco más grandes en celular/tablet y sin Bit durante los juegos
    ========================================================= */
-body.in-game .bit-companion{ display:none !important; }
+body.in-arena .bit-companion{ display:none !important; }   /* en la Arena enseñan las lecciones del robot de cada juego */
 .arena-touch-btn{ width:48px; height:48px; font-size:18px; }
 .arena-touch-spacer{ width:48px; }
 .arena-touch-controls.lane .arena-touch-btn{ width:56px; height:56px; font-size:21px; }
@@ -1228,3 +1228,10 @@ body.mp-game .l1-piece{ width:100px; height:100px; }
 .fb-item-sub{ font-size:12px; color:var(--text-dim); margin:2px 0; }
 .fb-item-text{ font-size:13.5px; background:var(--bg-panel-2); border-radius:8px; padding:8px 10px; margin-top:4px; }
 @media (max-width:520px){ .fb-ratings{ grid-template-columns:1fr 1fr; } }
+
+/* Bit en los niveles: a la izquierda y sin bloquear toques (así no tapa los botones de la derecha) */
+body.in-game:not(.in-arena) .bit-companion{ pointer-events:none; z-index:40; }
+body.in-game:not(.in-arena) .bit-bubble{ pointer-events:none; text-align:left; }
+body.mp-game .bit-companion{ transform:scale(.6); }
+
+.wa-btn{ width:100%; margin-top:10px; min-height:46px; background:#128c4a !important; border-color:#25d366 !important; color:#fff !important; }
