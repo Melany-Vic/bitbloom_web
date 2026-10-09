@@ -150,6 +150,7 @@ function showScreen(id){
    ========================================================= */
 function enterGameMode(){
   document.body.classList.add('in-game');
+  document.body.classList.toggle('mp-game', !!((typeof mpSession !== 'undefined' && mpSession) || (window.onlineRoom && window.onlineRoom.active)));
   const hint = document.getElementById('arenaRotateHint');
   if (hint) hint.classList.add('active');
   try {
@@ -167,6 +168,7 @@ function enterGameMode(){
 function leaveGameMode(){
   if (!document.body.classList.contains('in-game')) return;
   document.body.classList.remove('in-game');
+  document.body.classList.remove('mp-game');
   const hint = document.getElementById('arenaRotateHint');
   if (hint) hint.classList.remove('active');
   try {
@@ -584,8 +586,10 @@ window.addEventListener('DOMContentLoaded', () => {
   $('#btnGameExit').addEventListener('click', exitGame);
   $('#btnOpenInstructions').addEventListener('click', () => showInstructions(false));
   $('#btnInstructionsBack').addEventListener('click', goLevels);
-  $('#btnOpenShop').addEventListener('click', showShop);
-  $('#btnShopBack').addEventListener('click', goLevels);
+  const openShopSafe = () => { try { showShop(); } catch (err) { console.error(err); showToast('No se pudo abrir la tienda: ' + err.message); } };
+  $('#btnOpenShop').addEventListener('click', () => { window._shopFromMenu = false; openShopSafe(); });
+  $('#btnMenuShop').addEventListener('click', () => { window._shopFromMenu = true; openShopSafe(); });
+  $('#btnShopBack').addEventListener('click', () => (window._shopFromMenu ? goMenu() : goLevels()));
   $('#btnProfileBack').addEventListener('click', goMenu);
   $('#btnLogout').addEventListener('click', logoutProfile);
   $('#btnMultiplayer').addEventListener('click', openMultiplayerChoice);

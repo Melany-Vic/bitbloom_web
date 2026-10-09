@@ -163,16 +163,21 @@ function enterRoomLobby(code, isHost, myName){
   });
 
   const messagesRef = fs.collection(db, 'rooms', code, 'messages');
-  const q = fs.query(messagesRef, fs.orderBy('createdAt', 'asc'), fs.limit(50));
+  /* Solo se escuchan los últimos 30 mensajes, para que el chat no se llene */
+  const q = fs.query(messagesRef, fs.orderBy('createdAt', 'desc'), fs.limit(30));
   onlineRoom.unsubChat = fs.onSnapshot(q, snap => {
     const msgs = [];
     snap.forEach(d => msgs.push(d.data()));
+    msgs.reverse();
     renderChatMessages(msgs);
   });
 }
 
 function renderRoomLobby(){
   const wrap = $('#onlineRoomWrap');
+  const prevInput = $('#onlineChatInput');
+  const prevText = prevInput ? prevInput.value : '';
+  const hadFocus = !!prevInput && document.activeElement === prevInput;
   const data = onlineRoom.data;
   if (!data) return;
   const uid = FirebaseAPI.uid();
@@ -199,7 +204,14 @@ function renderRoomLobby(){
       ${data.status === 'playing' && !allFinished ? `<p class="level-hint">Esperando a que todos terminen…</p>` : ''}
     </div>
     <div class="online-panel online-chat">
-      <h3 style="font-family:var(--font-display); font-size:13px; margin-bottom:10px;">💬 Chat de la sala</h3>
+      <div class="online-chat-head">
+        <h3 style="font-family:var(--font-display); font-size:13px;">💬 Chat de la sala <span class="chat-badge hidden" id="chatBadge">0</span></h3>
+        <div class="online-chat-tools">
+          <button id="chatClear" title="Limpiar la vista del chat">🧹</button>
+          <button id="chatToggle" title="Minimizar o abrir el chat">${onlineRoom.chatCollapsed ? '▴' : '▾'}</button>
+        </div>
+      </div>
+      <div class="online-chat-body ${onlineRoom.chatCollapsed ? 'hidden' : ''}" id="chatBody">
       <div class="online-chat-quick">
         <button data-msg="👍 ¡Vamos bien!">👍 ¡Vamos bien!</button>
         <button data-msg="🆘 ¡Ayuda!">🆘 ¡Ayuda!</button>
@@ -210,6 +222,7 @@ function renderRoomLobby(){
       <div class="online-chat-input-row">
         <input type="text" id="onlineChatInput" placeholder="Escribí un mensaje…" maxlength="140">
         <button id="onlineChatSend">Enviar</button>
+      </div>
       </div>
     </div>
   `;
@@ -238,6 +251,16 @@ function renderRoomLobby(){
   $('#onlineChatInput').addEventListener('keydown', e => {
     if (e.key === 'Enter'){ $('#onlineChatSend').click(); }
   });
+  $('#chatClear').onclick = () => { onlineRoom.chatClearedAt = Date.now(); renderChatMessages(onlineRoom.lastMsgs || []); };
+  $('#chatToggle').onclick = () => {
+    onlineRoom.chatCollapsed = !onlineRoom.chatCollapsed;
+    if (!onlineRoom.chatCollapsed) onlineRoom.chatUnread = 0;
+    $('#chatBody').classList.toggle('hidden', onlineRoom.chatCollapsed);
+    $('#chatToggle').textContent = onlineRoom.chatCollapsed ? '▴' : '▾';
+    renderChatMessages(onlineRoom.lastMsgs || []);
+  };
+  const newInput = $('#onlineChatInput');
+  if (prevText){ newInput.value = prevText; if (hadFocus) newInput.focus(); }   // no se pierde lo que escribías
 
   renderChatMessages(onlineRoom.lastMsgs || []);
   maybeShowRoomScoreboard();
@@ -248,14 +271,31 @@ function renderChatMessages(msgs){
   const box = $('#onlineChatMessages');
   if (!box) return;
   const uid = FirebaseAPI.uid();
-  box.innerHTML = msgs.map(m => `
-    <div class="online-chat-msg ${m.uid === uid ? 'mine' : ''}"><span class="who">${m.name}:</span>${m.text}</div>
-  `).join('');
+  const since = onlineRoom.chatClearedAt || 0;
+  /* Se muestran solo los últimos 20 y los mensajes repetidos seguidos se juntan (×N) */
+  const shown = [];
+  msgs.filter(m => (m.createdAt || 0) > since).slice(-20).forEach(m => {
+    const prev = shown[shown.length - 1];
+    if (prev && prev.uid === m.uid && prev.text === m.text){ prev.n++; }
+    else shown.push({ uid:m.uid, name:m.name, text:m.text, n:1 });
+  });
+  box.innerHTML = shown.length ? shown.map(m => `
+    <div class="online-chat-msg ${m.uid === uid ? 'mine' : ''}"><span class="who">${escapeHtml(m.name)}:</span>${escapeHtml(m.text)}${m.n > 1 ? ' <b class="chat-x">×' + m.n + '</b>' : ''}</div>
+  `).join('') : '<p class="level-hint" style="margin:auto;">Sin mensajes todavía.</p>';
   box.scrollTop = box.scrollHeight;
+  // contador de mensajes sin leer cuando el chat está minimizado
+  const total = msgs.length;
+  if (onlineRoom.chatCollapsed && onlineRoom.lastTotal != null && total > onlineRoom.lastTotal) onlineRoom.chatUnread = (onlineRoom.chatUnread || 0) + (total - onlineRoom.lastTotal);
+  onlineRoom.lastTotal = total;
+  const badge = $('#chatBadge');
+  if (badge){ badge.textContent = onlineRoom.chatUnread || 0; badge.classList.toggle('hidden', !(onlineRoom.chatCollapsed && onlineRoom.chatUnread)); }
 }
 
 async function sendRoomChat(text){
   if (!onlineRoom.active) return;
+  const now = Date.now();
+  if (now - (onlineRoom.lastSent || 0) < 1500){ showToast('⏳ Espera un momento antes de enviar otro mensaje'); return; }   // evita que se llene el chat
+  onlineRoom.lastSent = now;
   const db = FirebaseAPI.db(), fs = FirebaseAPI.fs(), uid = FirebaseAPI.uid();
   const messagesRef = fs.collection(db, 'rooms', onlineRoom.code, 'messages');
   try {

@@ -1125,3 +1125,62 @@ body.in-game .bit-companion{ display:none !important; }
   .lesson .mission-avatar{ width:46px; } .lesson-icon{ font-size:30px; } .lesson-text{ font-size:12.5px; padding:8px 10px; margin:4px 0; }
   .lesson h2{ font-size:15px; margin:2px 0; }
 }
+
+/* Chat compacto */
+.online-chat{ height:auto !important; }
+.online-chat-messages{ flex:none !important; height:190px; }
+.online-chat-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.online-chat-tools{ display:flex; gap:6px; }
+.online-chat-tools button{ min-width:40px; height:36px; border-radius:var(--radius-sm); background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text-hi); font-size:15px; }
+.chat-badge{ display:inline-block; min-width:20px; padding:1px 6px; border-radius:999px; background:var(--alert-magenta); color:#fff; font-size:11px; text-align:center; margin-left:6px; }
+.chat-x{ color:var(--spark-gold); font-size:11px; }
+@media (orientation:landscape) and (max-height:520px){ .online-chat-messages{ height:110px; } }
+
+
+/* =========================================================
+   iPhone: zonas seguras (notch / barra de estado) para que
+   los botones de arriba (Volver, Tienda…) siempre se puedan tocar
+   ========================================================= */
+.screen-header{
+  padding-top:calc(10px + env(safe-area-inset-top, 0px));
+  padding-left:max(12px, env(safe-area-inset-left, 0px));
+  padding-right:max(12px, env(safe-area-inset-right, 0px));
+}
+.hud{
+  padding-top:calc(6px + env(safe-area-inset-top, 0px));
+  padding-left:max(12px, env(safe-area-inset-left, 0px));
+  padding-right:max(12px, env(safe-area-inset-right, 0px));
+}
+.game-stage{ padding-left:max(3vw, env(safe-area-inset-left, 0px)); padding-right:max(3vw, env(safe-area-inset-right, 0px)); }
+.header-stats .btn-icon, .screen-header > .btn-icon{ min-height:40px; }
+
+/* Cualquier pantalla táctil: botones de juego de al menos ~44 px (tamaño de un dedo) */
+@media (pointer:coarse){
+  #screenGame .btn-icon, #screenArenaGame .btn-icon{ min-height:44px; min-width:44px; }
+  #screenGame .modal-btn, .modal-actions .modal-btn{ min-height:46px; }
+  .quiz-opt, .l2-opt, .l3-btn{ min-height:48px; }
+  .l1-piece{ width:92px; height:92px; }
+}
+/* Multijugador (local y en línea): botones todavía más grandes dentro de los juegos */
+body.mp-game .arena-touch-btn{ width:60px; height:60px; font-size:22px; }
+body.mp-game .arena-touch-spacer{ width:60px; }
+body.mp-game .arena-touch-controls.lane .arena-touch-btn{ width:66px; height:66px; font-size:25px; }
+body.mp-game #screenGame .btn-icon, body.mp-game #screenArenaGame .btn-icon{ min-height:48px; min-width:48px; padding:10px 16px; font-size:13.5px; }
+body.mp-game #screenGame .modal-btn{ min-height:52px; padding:12px 22px; font-size:14px; }
+body.mp-game .quiz-opt, body.mp-game .l2-opt, body.mp-game .l3-btn{ min-height:56px; font-size:14.5px; padding:14px 16px; }
+body.mp-game .l1-piece{ width:100px; height:100px; }
+@media (orientation:landscape) and (max-height:520px){
+  body.mp-game .arena-touch-btn{ width:54px; height:54px; font-size:20px; }
+  body.mp-game .arena-touch-spacer{ width:54px; }
+  body.mp-game .arena-touch-controls.lane .arena-touch-btn{ width:60px; height:60px; font-size:22px; }
+  body.mp-game .quiz-opt, body.mp-game .l2-opt, body.mp-game .l3-btn{ min-height:50px; font-size:13px; padding:10px 14px; }
+  body.mp-game #screenGame .modal-btn{ min-height:48px; padding:10px 18px; font-size:13px; }
+  body.mp-game .l1-piece{ width:84px; height:84px; }
+  .l1-piece{ width:76px; height:76px; }
+}
+
+/* Arrastrar y soltar (nivel 1) */
+.drag-ghost{ opacity:.95; border-color:var(--circuit-cyan) !important; box-shadow:0 14px 34px rgba(0,0,0,.6), 0 0 18px rgba(79,214,255,.5) !important; border-radius:var(--radius-sm); }
+.dragging-source{ opacity:.3; }
+.l1-piece.selected{ border-color:var(--bloom-lime); box-shadow:0 0 16px rgba(164,242,60,.45); transform:translateY(-3px); }
+.l1-slot.active{ min-height:64px; }

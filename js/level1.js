@@ -30,12 +30,17 @@ function initLevel1(){
   l1SectionIndex = 0;
   const stage = $('#gameStage');
   stage.innerHTML = `
-    <p class="level-hint">Cada sección tiene una pieza correcta. Arrastrala hasta la ranura resaltada.</p>
+    <p class="level-hint">Cada sección tiene una pieza correcta. Arrástrala hasta la ranura resaltada (o toca la pieza y luego la ranura).</p>
     <div class="level-goal-bar">Sección <span id="l1SectionNum">1</span> / ${L1_PARTS.length}</div>
     <div class="l1-board" id="l1Board"></div>
     <div class="l1-tray" id="l1Tray"></div>
   `;
   const board = $('#l1Board');
+  board.addEventListener('click', (ev) => {
+    const slot = ev.target.closest('.l1-slot.active');
+    const sel = document.querySelector('.l1-piece.selected');
+    if (slot && sel) l1Place(sel, slot, sel._l1Correct);
+  });
   L1_PARTS.forEach(p => {
     const slot = el('div', 'l1-slot', `
       <div class="l1-slot-icon">?</div>
@@ -78,36 +83,55 @@ function l1RenderSection(){
   });
 }
 
+/* Coloca una pieza en una ranura (con arrastre o con toque) */
+function l1Place(chip, slot, correctKey){
+  if (chip.dataset.key === correctKey){
+    const partInfo = L1_PARTS.find(p => p.key === correctKey);
+    slot.classList.remove('active');
+    slot.classList.add('filled');
+    slot.querySelector('.l1-slot-icon').innerHTML = l1IconHtml(partInfo);
+    slot.classList.add('pop');
+    addScore(100);
+    beep('correct');
+    bitSay(partInfo.func, 'talk', 3400);
+    l1SectionIndex++;
+    $$('.l1-piece').forEach(c => c.classList.remove('selected'));
+    if (l1SectionIndex >= L1_PARTS.length){
+      const stars = clamp(State.lives, 1, 3);
+      setTimeout(() => finishLevel(1, true, stars, '¡Computadora ensamblada con éxito! Bit ya puede encenderla.'), 400);
+    } else {
+      setTimeout(l1RenderSection, 1700);
+    }
+  } else {
+    resetDraggablePosition(chip);
+    chip.classList.remove('selected');
+    registerL1Mistake(slot);
+  }
+}
+
 function bindL1Piece(chip, correctKey){
   makeDraggable(chip, {
-    onDrop: (target) => {
-      const slot = target ? target.closest('.l1-slot.active') : null;
-      if (slot){
-        if (chip.dataset.key === correctKey){
-          const partInfo = L1_PARTS.find(p => p.key === correctKey);
-          slot.classList.remove('active');
-          slot.classList.add('filled');
-          slot.querySelector('.l1-slot-icon').innerHTML = l1IconHtml(partInfo);
-          slot.classList.add('pop');
-          addScore(100);
-          beep('correct');
-          bitSay(partInfo.func, 'talk', 3400);
-          l1SectionIndex++;
-          if (l1SectionIndex >= L1_PARTS.length){
-            const stars = clamp(State.lives, 1, 3);
-            setTimeout(() => finishLevel(1, true, stars, '¡Computadora ensamblada con éxito! Bit ya puede encenderla.'), 400);
-          } else {
-            setTimeout(l1RenderSection, 1700);
-          }
-        } else {
-          resetDraggablePosition(chip);
-          registerL1Mistake(slot);
+    onDrop: (target, node, info) => {
+      let slot = target ? target.closest('.l1-slot.active') : null;
+      /* Tolerancia para dedos: si soltaste cerca de la ranura resaltada, cuenta */
+      if (!slot && info){
+        const act = document.querySelector('.l1-slot.active');
+        if (act){
+          const r = act.getBoundingClientRect(), m = 36;
+          if (info.x > r.left - m && info.x < r.right + m && info.y > r.top - m && info.y < r.bottom + m) slot = act;
         }
-      } else {
-        resetDraggablePosition(chip);
       }
-    }
+      if (slot) l1Place(chip, slot, correctKey);
+      else resetDraggablePosition(chip);
+    },
+    /* Alternativa al arrastre: toca la pieza y luego la ranura resaltada */
+    onTap: () => {
+      $$('.l1-piece').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      bitSay('Ahora toca la ranura resaltada para colocar la pieza.', 'talk', 2200);
+    },
   });
+  chip._l1Correct = correctKey;
 }
 
 function registerL1Mistake(slot){
