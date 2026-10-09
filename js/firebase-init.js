@@ -120,6 +120,24 @@ window.AppStorage = {
     return null;
   },
 
+  /* Borra un documento (usado para quitar invitaciones ya respondidas) */
+  async remove(key, shared){
+    if (FIREBASE_ENABLED){
+      await _initFirebase();
+      if (_fbDb){
+        try {
+          const path = shared ? ['shared', key] : ['users', _fbUid, 'data', key];
+          await _fb.deleteDoc(_fb.doc(_fbDb, ...path));
+          return true;
+        } catch (err) { console.warn('BitBloom (Firestore delete):', err); return false; }
+      }
+    }
+    if (window.storage && window.storage.delete){
+      try { await window.storage.delete(key, shared); return true; } catch (err) { return false; }
+    }
+    return false;
+  },
+
   /* Lista los documentos cuya clave empieza con `prefix`. Devuelve [{key, value}] */
   async list(prefix, shared){
     if (FIREBASE_ENABLED){

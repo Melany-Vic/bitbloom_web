@@ -150,6 +150,7 @@ function showScreen(id){
    ========================================================= */
 function enterGameMode(){
   document.body.classList.add('in-game');
+  if (typeof updateGiftFab === 'function') setTimeout(updateGiftFab, 0);
   document.body.classList.toggle('mp-game', !!((typeof mpSession !== 'undefined' && mpSession) || (window.onlineRoom && window.onlineRoom.active)));
   const hint = document.getElementById('arenaRotateHint');
   if (hint) hint.classList.add('active');
@@ -168,6 +169,7 @@ function enterGameMode(){
 function leaveGameMode(){
   if (!document.body.classList.contains('in-game')) return;
   document.body.classList.remove('in-game');
+  if (typeof updateGiftFab === 'function') setTimeout(updateGiftFab, 0);
   document.body.classList.remove('mp-game');
   const hint = document.getElementById('arenaRotateHint');
   if (hint) hint.classList.remove('active');
@@ -581,6 +583,7 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   $('#btnLevels').addEventListener('click', goLevels);
   $('#btnCredits').addEventListener('click', goCredits);
+  $('#btnFeedback').addEventListener('click', openFeedbackBox);
   $('#btnLevelsBack').addEventListener('click', goMenu);
   $('#btnCreditsBack').addEventListener('click', goMenu);
   $('#btnGameExit').addEventListener('click', exitGame);
@@ -615,6 +618,8 @@ window.addEventListener('DOMContentLoaded', () => {
   if (lastActive && lastActive.name) State.profile = { name: lastActive.name, role: lastActive.role || 'estudiante' };
 
   loadProgress().finally(() => {
+    startInvitePolling();
+    refreshCurrencyUI();
     $('#menuCoins').textContent = State.coins;
     if (State.shopOwned.has('accessory')) $('#bitAccessory').classList.remove('hidden');
     refreshProfileUI();

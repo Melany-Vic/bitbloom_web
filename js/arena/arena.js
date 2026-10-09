@@ -51,6 +51,10 @@ function arenaFitPlayer(sprite, h, wFrac, hFrac){
 /* ---------- Bonos de cofres y cofres recogidos durante el juego ---------- */
 let ARENA_BONUS = { lives:0, time:1 };
 let arenaChestList = [];
+/* Escena de Phaser que se está jugando ahora (para aplicar regalos de compañeros) */
+function arenaLiveScene(){
+  try { return arenaPhaserGame && arenaPhaserGame.scene.scenes[0]; } catch (e) { return null; }
+}
 function arenaCollectChest(img){ arenaChestList.push(img || 'reward_crate'); }
 
 let _phaserLoadPromise = null;
@@ -172,7 +176,7 @@ async function launchArenaGame(key){
 function arenaSetLives(n){
   const box = $('#arenaLives');
   box.innerHTML = '';
-  for (let i = 0; i < 3 + ARENA_BONUS.lives; i++){
+  for (let i = 0; i < Math.max(3 + ARENA_BONUS.lives, n); i++){
     box.appendChild(el('div', `life ${i < n ? '' : 'lost'}`));
   }
 }

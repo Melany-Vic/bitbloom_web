@@ -200,6 +200,7 @@ async function showProfileScreen(mode){
     const name = $('#authName').value.trim().slice(0, 20);
     const p1 = $('#authPass').value, p2 = $('#authPass2').value;
     if (name.length < 3){ showError('El nombre de usuario debe tener al menos 3 caracteres.'); return; }
+    { const mod = checkText(name); if (!mod.ok){ showError('🚫 Ese nombre de usuario no está permitido. Elige uno respetuoso.'); return; } }
     if (p1.length < 4){ showError('La contraseña debe tener al menos 4 caracteres.'); return; }
     if (p1 !== p2){ showError('Las contraseñas no coinciden.'); return; }
     busy(true);

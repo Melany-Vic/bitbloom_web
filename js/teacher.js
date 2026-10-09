@@ -30,6 +30,9 @@ function showTeacherPanel(){
   `;
 
   wrap.innerHTML = `
+    <div class="online-panel">
+      <button class="modal-btn" id="teacherFeedbackBtn">💬 Ver opiniones de los usuarios</button>
+    </div>
     <div class="online-panel" id="teacherMyClasses">
       <h3 class="prog-h">📊 Tus actividades y resultados</h3>
       <p class="level-hint" id="teacherClassesMsg">Cargando…</p>
@@ -48,6 +51,7 @@ function showTeacherPanel(){
   `;
 
   $('#teacherSaveBtn').addEventListener('click', saveTeacherActivity);
+  const fbBtn = $('#teacherFeedbackBtn'); if (fbBtn) fbBtn.onclick = showFeedbackInbox;
   loadTeacherClasses();
 }
 
