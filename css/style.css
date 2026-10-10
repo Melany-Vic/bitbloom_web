@@ -761,7 +761,7 @@ img{ max-width:100%; display:block; }
    Arena de Desafíos (juegos Phaser)
    ========================================================= */
 .arena-wrap{ flex:1; max-width:1000px; margin:0 auto; width:100%; padding:10px 20px 60px; }
-.arena-grid{ display:grid; gap:18px; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); }
+.arena-grid{ display:grid; gap:18px; grid-template-columns:repeat(3, minmax(0, 1fr)); }   /* 3 juegos arriba y 3 abajo */
 .arena-card{
   background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
   padding:22px 18px; text-align:left; cursor:pointer; transition:.2s;
@@ -1251,3 +1251,29 @@ body.mp-game .bit-companion{ transform:scale(.6); }
 
 /* Texto para buscadores/lectores de pantalla: existe en la página pero no se ve (no estorba al juego) */
 .seo-about{ position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+.mp-err{ flex:none; width:58px; text-align:center; font-size:12.5px; color:var(--text-dim); }
+.mp-table .mp-head .mp-err{ font-size:11px; }
+
+/* Arena: 3 columnas también en celular (tarjetas más compactas) */
+@media (max-width:760px), (orientation:landscape) and (max-height:520px){
+  .arena-grid{ gap:8px; }
+  .arena-card{ padding:12px 10px; }
+  .arena-card-icon{ font-size:24px; margin-bottom:6px; }
+  .arena-card-name{ font-size:12px; margin-bottom:5px; }
+  .arena-card-desc{ font-size:10.5px; line-height:1.3; margin-bottom:8px; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; }
+  .arena-card-reward{ font-size:10.5px; }
+}
+
+/* Bit más grande en computadora (con mensajes más grandes); pequeño en celular y tablet */
+@media (min-width:1000px) and (hover:hover) and (pointer:fine){
+  body.in-game:not(.in-arena) .bit-companion{ transform:none; left:20px; bottom:16px; gap:10px; }
+  body.in-game:not(.in-arena) .bit-avatar{ width:136px; height:136px; }
+  body.in-game:not(.in-arena) .bit-bubble{ font-size:16px; line-height:1.5; padding:14px 18px; max-width:clamp(260px, calc((100vw - 980px) / 2 - 20px), 460px); border-radius:16px 16px 16px 4px; }
+}
+
+@media (orientation:landscape) and (max-height:520px){
+  .arena-card{ padding:8px 10px; }
+  .arena-card-icon{ font-size:20px; margin-bottom:2px; }
+  .arena-card-desc{ -webkit-line-clamp:2; margin-bottom:4px; }
+}

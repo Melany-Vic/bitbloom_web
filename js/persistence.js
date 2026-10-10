@@ -284,6 +284,7 @@ const MISTAKE_TOPICS = {
   actividad:{ name:'Actividades de tu profesor/a',  icon:'🧑‍🏫' },
 };
 function recordMistake(topic, label){
+  State.mistakeTick = (State.mistakeTick || 0) + 1;   // se usa en el multijugador local para desempatar
   if (!State.profile) return;
   if (!State.mistakes) State.mistakes = {};
   const t = State.mistakes[topic] || (State.mistakes[topic] = { count:0, items:{}, last:0 });

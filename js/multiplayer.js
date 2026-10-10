@@ -87,16 +87,18 @@ function mpNextTurn(){
   $('#mpReady').onclick = () => {
     hideModal();
     const preScore = State.score;
+    const preMistakes = State.mistakeTick || 0;
     State.mpTurnCallback = (id, won, stars, message) => {
       const turnScore = Math.max(0, State.score - preScore);
       player.turnScore = turnScore;
       player.stars = stars;
       player.won = won;
+      player.mistakes = Math.max(0, (State.mistakeTick || 0) - preMistakes);
       showModal(`
         <img src="assets/characters/bit.png" class="mission-avatar" alt="Bit">
         <h2>${won ? '¡Turno completo!' : 'No se logró esta vez'}</h2>
         <p>${message}</p>
-        <p>Puntos conseguidos en este turno: <strong class="accent-gold">⬡ ${turnScore}</strong></p>
+        <p>Puntos conseguidos en este turno: <strong class="accent-gold">⬡ ${turnScore}</strong> &nbsp;·&nbsp; Errores: <strong>${player.mistakes}</strong></p>
         <div class="modal-actions">
           <button class="modal-btn primary" id="mpTurnContinue">Continuar ▶</button>
         </div>
@@ -115,39 +117,49 @@ function mpShowResults(){
   const wrap = $('#mpWrap');
   showScreen('#screenMultiplayer');
   const S = mpSession;
-  const sorted = [...S.players].sort((a, b) => b.turnScore - a.turnScore);
+  S.players.forEach(p => { if (p.mistakes == null) p.mistakes = 0; });
+  /* Orden: más puntos primero; si empatan en puntos, gana quien se equivocó menos */
+  const sorted = [...S.players].sort((a, b) => (b.turnScore - a.turnScore) || (a.mistakes - b.mistakes));
   const teamTotal = S.players.reduce((sum, p) => sum + p.turnScore, 0);
   S.players.forEach(p => { p.total += p.turnScore; });
 
-  let banner = '';
+  let winners = [], banner = '';
   if (S.mode === 'competencia'){
     const top = sorted[0].turnScore;
-    const winners = top > 0 ? sorted.filter(p => p.turnScore === top) : [];
+    const topGroup = top > 0 ? sorted.filter(p => p.turnScore === top) : [];
+    const fewest = topGroup.length ? Math.min(...topGroup.map(p => p.mistakes)) : 0;
+    winners = topGroup.filter(p => p.mistakes === fewest);        // empate total = todos ganan
     winners.forEach(p => p.wins++);
-    banner = winners.length === 0
-      ? '<div class="mp-winner tie">Nadie sumó puntos esta ronda</div>'
-      : winners.length === 1
-        ? `<div class="mp-winner">🏆 ¡Ganó ${escapeHtml(winners[0].name)}!</div>`
-        : `<div class="mp-winner tie">🤝 ¡Empate entre ${winners.map(w => escapeHtml(w.name)).join(' y ')}!</div>`;
+    const tiedOnPoints = topGroup.length > 1;
+    if (winners.length === 0){
+      banner = '<div class="mp-winner tie">Nadie sumó puntos esta ronda</div>';
+    } else if (winners.length === 1){
+      banner = `<div class="mp-winner">🏆 ¡Ganó ${escapeHtml(winners[0].name)}!` +
+        (tiedOnPoints ? `<br><small>Empataron en puntos, pero ${escapeHtml(winners[0].name)} se equivocó menos (${winners[0].mistakes} ${winners[0].mistakes === 1 ? 'error' : 'errores'}).</small>` : '') + '</div>';
+    } else {
+      banner = `<div class="mp-winner">🏆 ¡Empate! Ganan ${winners.map(w => escapeHtml(w.name) + ' 🏆').join(' y ')}<br><small>Mismos puntos y mismos errores.</small></div>`;
+    }
   } else {
     banner = `<div class="mp-winner">🤝 ¡Equipo! Sumaron ⬡ ${teamTotal}</div>`;
   }
+  const isWinner = p => winners.indexOf(p) >= 0;
 
   wrap.innerHTML = `
     <h2 style="text-align:center;margin-bottom:6px;">🏁 Ronda ${S.round} · Tabla de puntajes</h2>
     ${banner}
     <div class="leaderboard-list mp-table">
-      <div class="leaderboard-row mp-head"><div class="leaderboard-rank">#</div><div class="leaderboard-name">Jugador</div><div class="leaderboard-score">Ronda</div><div class="leaderboard-coins">Total</div><div class="mp-wins">Victorias</div></div>
+      <div class="leaderboard-row mp-head"><div class="leaderboard-rank">#</div><div class="leaderboard-name">Jugador</div><div class="leaderboard-score">Ronda</div><div class="mp-err">Errores</div><div class="leaderboard-coins">Total</div><div class="mp-wins">Victorias</div></div>
       ${sorted.map((p, i) => `
-        <div class="leaderboard-row ${i === 0 && S.mode === 'competencia' && p.turnScore > 0 ? 'me' : ''}">
-          <div class="leaderboard-rank">${S.mode === 'competencia' && i === 0 && p.turnScore > 0 ? '🏆' : i + 1}</div>
-          <div class="leaderboard-name">${escapeHtml(p.name)} <small>${'★'.repeat(p.stars)}${'☆'.repeat(3 - p.stars)}</small></div>
+        <div class="leaderboard-row ${isWinner(p) ? 'me' : ''}">
+          <div class="leaderboard-rank">${isWinner(p) ? '🏆' : i + 1}</div>
+          <div class="leaderboard-name">${escapeHtml(p.name)}${isWinner(p) ? ' 🏆' : ''} <small>${'★'.repeat(p.stars)}${'☆'.repeat(3 - p.stars)}</small></div>
           <div class="leaderboard-score">⬡ ${p.turnScore}</div>
+          <div class="mp-err">${p.mistakes}</div>
           <div class="leaderboard-coins">⬡ ${p.total}</div>
           <div class="mp-wins">${S.mode === 'competencia' ? '🏅 ' + p.wins : '—'}</div>
         </div>`).join('')}
     </div>
-    <p class="level-hint">¿Quieren jugar otra ronda?</p>
+    <p class="level-hint">Si hay empate en puntos, gana quien se equivoca menos. ¿Quieren jugar otra ronda?</p>
     <div class="modal-actions">
       <button class="modal-btn" id="mpBackMenu">🚪 No, salir</button>
       <button class="modal-btn primary" id="mpAgain">🔁 Otra ronda</button>
@@ -157,7 +169,7 @@ function mpShowResults(){
   $('#mpAgain').addEventListener('click', () => {
     S.round++;
     S.currentIndex = 0;
-    S.players.forEach(p => { p.turnScore = 0; p.stars = 0; p.won = false; });
+    S.players.forEach(p => { p.turnScore = 0; p.stars = 0; p.won = false; p.mistakes = 0; });
     mpNextTurn();
   });
 }
