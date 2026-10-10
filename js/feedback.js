@@ -15,7 +15,11 @@ const FB_AREAS = ['Juegos de la Arena', 'Niveles del mapa', 'Tienda y cofres', '
 function openFeedbackBox(){
   let rating = 0, works = '';
   showModal(`
-    <h2>💬 Tus opiniones</h2>
+    <h2>💬 Opiniones</h2>
+    <div class="auth-tabs" style="margin-bottom:6px;">
+      <button class="auth-tab active" id="fbTabMine">✍️ Dar mi opinión</button>
+      <button class="auth-tab" id="fbTabAll">👥 Opiniones de todos</button>
+    </div>
     <p class="level-hint" style="margin-top:0;">Cuéntanos cómo te va con BitBloom. ¡Tu opinión nos ayuda a mejorarlo!</p>
     <div class="fb-block">
       <label class="profile-label">¿Qué te parece el videojuego?</label>
@@ -48,6 +52,7 @@ function openFeedbackBox(){
   $$('.fb-work').forEach(b => b.onclick = () => { works = b.dataset.w; $$('.fb-work').forEach(x => x.classList.toggle('sel', x === b)); });
   $('#fbText').addEventListener('input', () => { $('#fbCount').textContent = $('#fbText').value.length; });
   $('#fbCancel').onclick = hideModal;
+  $('#fbTabAll').onclick = openFeedbackBoard;
   $('#fbSend').onclick = async () => {
     const text = $('#fbText').value.trim();
     if (!rating){ err('Elige cómo te parece el videojuego.'); return; }
@@ -112,4 +117,61 @@ async function showFeedbackInbox(){
     </div>`;
   $('#fbInboxBack').onclick = showTeacherPanel;
   $('#fbInboxRefresh').onclick = showFeedbackInbox;
+}
+
+
+/* =========================================================
+   TABLERO PÚBLICO: la valoración de todos los usuarios,
+   visible para cualquiera que juegue.
+   ========================================================= */
+async function openFeedbackBoard(){
+  showModal(`
+    <h2>💬 Opiniones</h2>
+    <div class="auth-tabs" style="margin-bottom:6px;">
+      <button class="auth-tab" id="fbTabMine2">✍️ Dar mi opinión</button>
+      <button class="auth-tab active" id="fbTabAll2">👥 Opiniones de todos</button>
+    </div>
+    <p class="level-hint" id="fbBoardMsg">Cargando las opiniones de los jugadores…</p>
+    <div id="fbBoard"></div>
+    <div class="modal-actions"><button class="modal-btn" id="fbBoardClose">Cerrar</button></div>
+  `);
+  $('#fbTabMine2').onclick = openFeedbackBox;
+  $('#fbBoardClose').onclick = hideModal;
+  const rows = await AppStorage.list('feedback:', true);
+  const items = rows.map(r => { try { return JSON.parse(r.value); } catch (e) { return null; } })
+    .filter(i => i && i.rating).sort((a, b) => b.ts - a.ts);
+  const box = $('#fbBoard'), msg = $('#fbBoardMsg');
+  if (!box) return;                                   // se cerró mientras cargaba
+  if (!items.length){ msg.textContent = 'Todavía no hay opiniones. ¡Sé la primera persona en opinar!'; return; }
+  msg.textContent = '';
+  const n = items.length;
+  const avg = items.reduce((s, i) => s + i.rating, 0) / n;
+  const works = Math.round(items.filter(i => i.works === 'si').length / n * 100);
+  const dist = FB_RATINGS.map(r => ({ r, c: items.filter(i => i.rating === r.v).length }));
+  const areas = {};
+  items.forEach(i => { areas[i.area] = (areas[i.area] || 0) + 1; });
+  const topAreas = Object.keys(areas).sort((a, b) => areas[b] - areas[a]).slice(0, 4);
+  const stars = Math.round(avg / 4 * 5 * 2) / 2;
+  box.innerHTML = `
+    <div class="fb-summary">
+      <div class="fb-big"><b>${(avg / 4 * 5).toFixed(1)}</b><span>de 5</span><div class="fb-stars">${'★'.repeat(Math.floor(stars))}${stars % 1 ? '½' : ''}${'☆'.repeat(5 - Math.ceil(stars))}</div></div>
+      <div class="fb-bars">
+        ${dist.map(d => `<div class="fb-bar-row"><span>${d.r.icon}</span><div class="tr-bar"><div class="tr-bar-fill" style="width:${Math.round(d.c / n * 100)}%"></div></div><b>${d.c}</b></div>`).join('')}
+      </div>
+    </div>
+    <div class="prog-stats" style="margin:10px 0;">
+      <div class="prog-stat"><b>${n}</b><span>opiniones</span></div>
+      <div class="prog-stat"><b>${works}%</b><span>dice que todo funciona bien</span></div>
+      <div class="prog-stat"><b>${n - items.filter(i => i.works === 'si').length}</b><span>reportan algún fallo</span></div>
+    </div>
+    <p class="prog-note" style="text-align:left;">Temas más comentados: ${topAreas.map(a => escapeHtml(a) + ' (' + areas[a] + ')').join(' · ')}</p>
+    <div class="fb-list">
+      ${items.filter(i => i.text).slice(0, 15).map(i => {
+        const r = FB_RATINGS.find(x => x.v === i.rating) || FB_RATINGS[2];
+        return `<div class="fb-item ${i.works === 'algo' ? 'issue' : ''}">
+          <div class="fb-item-top"><b>${r.icon} ${escapeHtml(i.user)}</b><small>${new Date(i.ts).toLocaleDateString('es')} · ${escapeHtml(i.area)}</small></div>
+          <div class="fb-item-text">${escapeHtml(i.text)}</div>
+        </div>`;
+      }).join('') || '<p class="level-hint">Aún no hay comentarios escritos.</p>'}
+    </div>`;
 }

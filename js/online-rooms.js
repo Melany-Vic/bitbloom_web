@@ -21,6 +21,7 @@ const ONLINE_ROOM_ACTIVITIES = [
   { key:'pixel',    name:'🎨 Taller de Píxeles' },
   { key:'tunnel',   name:'🚇 Túnel de la Red' },
   { key:'energy',   name:'⚡ Carga de Volt' },
+  { key:'db',       name:'🗄️ Bóveda de Datos' },
 ];
 const ROOM_MAX = 4;
 const ROOM_MODES = {
@@ -311,6 +312,7 @@ function renderRoomLobby(){
 
   wrap.innerHTML = `
     <div>
+      <div id="roundPanel"></div>
       <div class="online-panel online-code-box">
         <div class="online-code-hint">Comparte este código para que se unan (máx. ${ROOM_MAX} jugadores)</div>
         <div class="code">${onlineRoom.code}</div>
@@ -718,11 +720,20 @@ async function inviteToRoom(rawName){
   const name = (rawName || '').trim();
   const say = (t) => { if (msg) msg.textContent = t; };
   if (!name){ say('Escribe el nombre de usuario de tu amigo.'); return; }
-  const slug = slugifyProfileName(name);
+  const slug = slugifyProfileName(name.replace(/^@+/, ''));
   if (State.profile && slug === slugifyProfileName(State.profile.name)){ say('No puedes invitarte a ti mismo 🙂'); return; }
   say('Buscando…');
-  const rec = await fetchUserRecord(name);
-  if (!rec){ say('No existe un usuario con ese nombre. Revisa cómo se escribe.'); return; }
+  const cleaned = name.replace(/^@+/, '').trim();
+  const slug2 = slugifyProfileName(cleaned);
+  let rec = await fetchUserRecord(cleaned);
+  let confirmed = !!rec;
+  if (!confirmed){
+    // cuentas antiguas o conexión lenta: se busca también su "presencia" o su progreso guardado
+    for (const k of ['presence:' + slug2, 'bitbloom-progress-' + slug2]){
+      try { const r = await AppStorage.get(k, true); if (r && r.value){ confirmed = true; break; } } catch (_) {}
+    }
+    rec = { name: cleaned };
+  }
   const inv = {
     fromName: onlineRoom.myName, fromUser: State.profile ? State.profile.name : onlineRoom.myName,
     code: onlineRoom.code, mode: onlineRoom.data.mode, activity: onlineRoom.data.activity, createdAt: Date.now(),
@@ -730,8 +741,9 @@ async function inviteToRoom(rawName){
   try {
     const ok = await AppStorage.set('invite:' + slug + ':' + onlineRoom.code, JSON.stringify(inv), true);
     if (!ok) throw new Error('no guardado');
-    const online = await isUserOnline(name);
-    say(online
+    const online = await isUserOnline(cleaned);
+    if (!confirmed) say(`📨 Envié la invitación a «${cleaned}», pero no pude confirmar que esa cuenta exista. Le llegará si escribiste su nombre de usuario exacto. También puedes usar WhatsApp.`);
+    else say(online
       ? `✅ ${rec.name} está 🟢 en línea: la invitación le aparece en unos segundos dentro del juego.`
       : `✅ Invitación enviada a ${rec.name}, pero ⚪ no está en línea ahora. Le llegará cuando abra el juego; también puedes avisarle por WhatsApp.`);
     $('#inviteInput').value = '';
@@ -851,6 +863,77 @@ async function voteRoom(vote){
   try { await fs.updateDoc(roomRef, { [`players.${uid}.vote`]: vote }); } catch (err) { console.warn('voteRoom', err); }
 }
 
+/* Arma el ganador/dúo ganador y la tabla de la ronda */
+function buildRoundResult(data, uid){
+  const players = roomPlayers(data);
+  const sorted = players.slice().sort((a, b) => (b[1].score || 0) - (a[1].score || 0));
+  const voteIcon = v => v === 'again' ? '🔁 quiere otra' : v === 'leave' ? '🚪 sale' : '⏳ pensando…';
+  let banner = '', rowsHtml = '';
+  if (data.mode === 'duos'){
+    const tot = { A:0, B:0 };
+    players.forEach(([, p]) => { tot[p.team] = (tot[p.team] || 0) + (p.score || 0); });
+    const nA = duoName(data, 'A'), nB = duoName(data, 'B');
+    banner = tot.A === tot.B
+      ? `<div class="mp-winner tie">🤝 ¡Empate entre «${escapeHtml(nA)}» y «${escapeHtml(nB)}»! (⬡ ${tot.A})</div>`
+      : `<div class="mp-winner">🏆 ¡Ganó el dúo «${escapeHtml(tot.A > tot.B ? nA : nB)}»!<br><small>${escapeHtml(nA)}: ⬡ ${tot.A} · ${escapeHtml(nB)}: ⬡ ${tot.B}</small></div>`;
+    const order = tot.A >= tot.B ? ['A', 'B'] : ['B', 'A'];
+    rowsHtml = order.map((t, i) => `
+      <div class="leaderboard-row duo-row ${i === 0 && tot.A !== tot.B ? 'me' : ''}">
+        <div class="leaderboard-rank">${i === 0 && tot.A !== tot.B ? '🏆' : i + 1}</div>
+        <div class="leaderboard-name"><b>${escapeHtml(duoName(data, t))}</b></div>
+        <div class="leaderboard-score">⬡ ${tot[t]}</div>
+      </div>
+      ${players.filter(([, p]) => p.team === t).map(([u, p]) => `
+      <div class="leaderboard-row duo-member">
+        <div class="leaderboard-rank"></div>
+        <div class="leaderboard-name">${escapeHtml(p.name)}${u === uid ? ' (tú)' : ''}</div>
+        <div class="leaderboard-score">⬡ ${p.score || 0}</div>
+        <div class="mp-wins">${voteIcon(p.vote)}</div>
+      </div>`).join('')}`).join('');
+  } else {
+    const teamTotal = players.reduce((n, [, p]) => n + (p.score || 0), 0);
+    if (data.mode === 'cooperativo'){
+      banner = `<div class="mp-winner">🤝 ¡Equipo! Sumaron ⬡ ${teamTotal}</div>`;
+    } else {
+      const top = sorted[0][1].score || 0;
+      const winners = top > 0 ? sorted.filter(([, p]) => (p.score || 0) === top) : [];
+      banner = winners.length === 0 ? '<div class="mp-winner tie">Nadie sumó puntos esta ronda</div>'
+        : winners.length === 1 ? `<div class="mp-winner">🏆 ¡Ganó ${escapeHtml(winners[0][1].name)}!</div>`
+        : `<div class="mp-winner tie">🤝 ¡Empate entre ${winners.map(([, p]) => escapeHtml(p.name)).join(' y ')}!</div>`;
+    }
+    rowsHtml = sorted.map(([u, p], i) => `
+      <div class="leaderboard-row ${u === uid ? 'me' : ''}">
+        <div class="leaderboard-rank">${data.mode === 'competencia' && i === 0 && (p.score || 0) > 0 ? '🏆' : i + 1}</div>
+        <div class="leaderboard-name">${escapeHtml(p.name)}${u === uid ? ' (tú)' : ''}</div>
+        <div class="leaderboard-score">⬡ ${p.score || 0}</div>
+        <div class="mp-wins">${voteIcon(p.vote)}</div>
+      </div>`).join('');
+  }
+  return { banner, rowsHtml };
+}
+
+/* Panel fijo dentro de la sala: así se puede escribir en el chat primero y votar después */
+function renderRoundPanel(data, round){
+  const box = document.getElementById('roundPanel');
+  if (!box) return;
+  const uid = FirebaseAPI.uid();
+  const me = (data.players || {})[uid] || {};
+  const r = buildRoundResult(data, uid);
+  box.innerHTML = `
+    <div class="online-panel round-panel">
+      <h3 style="font-family:var(--font-display); font-size:14px; margin-bottom:6px;">🏁 Ronda ${round} terminada</h3>
+      ${r.banner}
+      <div class="leaderboard-list mp-table">${r.rowsHtml}</div>
+      <p class="level-hint" style="margin:10px 0 6px;">${me.vote === 'again' ? 'Esperando a que los demás elijan…' : '💬 Puedes comentar en el chat antes de decidir. Cuando estés listo, elige:'}</p>
+      <div class="modal-actions">
+        <button class="modal-btn" id="rpLeave">🚪 Salir</button>
+        <button class="modal-btn primary" id="rpAgain" ${me.vote === 'again' ? 'disabled' : ''}>🔁 Otra ronda</button>
+      </div>
+    </div>`;
+  $('#rpLeave').onclick = () => voteRoom('leave');
+  $('#rpAgain').onclick = () => voteRoom('again');
+}
+
 function maybeShowRoomScoreboard(){
   const data = onlineRoom.data;
   if (!data) return;
@@ -858,72 +941,36 @@ function maybeShowRoomScoreboard(){
   const allFinished = data.status === 'playing' && players.length > 0 && players.every(([, p]) => p.finished);
   if (!allFinished){
     if (onlineRoom.sbSig){ onlineRoom.sbSig = null; hideModal(); }   // empezó una ronda nueva
+    onlineRoom.sbHidden = null;
+    const bp = document.getElementById('roundPanel'); if (bp) bp.innerHTML = '';
     return;
   }
   const uid = FirebaseAPI.uid();
   const round = data.round || 1;
+  renderRoundPanel(data, round);                                    // siempre visible en la sala
   const sig = round + '|' + players.map(([u, p]) => u + ':' + p.score + ':' + (p.vote || '')).join(',');
   if (sig !== onlineRoom.sbSig){
     onlineRoom.sbSig = sig;
-    const sorted = players.slice().sort((a, b) => (b[1].score || 0) - (a[1].score || 0));
-    const me = data.players[uid] || {};
-    const voteIcon = v => v === 'again' ? '🔁 quiere otra' : v === 'leave' ? '🚪 sale' : '⏳ pensando…';
-    let banner = '', rowsHtml = '';
-
-    if (data.mode === 'duos'){
-      const tot = { A:0, B:0 };
-      players.forEach(([, p]) => { tot[p.team] = (tot[p.team] || 0) + (p.score || 0); });
-      const nA = duoName(data, 'A'), nB = duoName(data, 'B');
-      banner = tot.A === tot.B
-        ? `<div class="mp-winner tie">🤝 ¡Empate entre «${escapeHtml(nA)}» y «${escapeHtml(nB)}»! (⬡ ${tot.A})</div>`
-        : `<div class="mp-winner">🏆 ¡Ganó el dúo «${escapeHtml(tot.A > tot.B ? nA : nB)}»!<br><small>${escapeHtml(nA)}: ⬡ ${tot.A} · ${escapeHtml(nB)}: ⬡ ${tot.B}</small></div>`;
-      const order = tot.A >= tot.B ? ['A', 'B'] : ['B', 'A'];
-      rowsHtml = order.map((t, i) => `
-        <div class="leaderboard-row duo-row ${i === 0 && tot.A !== tot.B ? 'me' : ''}">
-          <div class="leaderboard-rank">${i === 0 && tot.A !== tot.B ? '🏆' : i + 1}</div>
-          <div class="leaderboard-name"><b>${escapeHtml(duoName(data, t))}</b></div>
-          <div class="leaderboard-score">⬡ ${tot[t]}</div>
-        </div>
-        ${players.filter(([, p]) => p.team === t).map(([u, p]) => `
-        <div class="leaderboard-row duo-member">
-          <div class="leaderboard-rank"></div>
-          <div class="leaderboard-name">${escapeHtml(p.name)}${u === uid ? ' (tú)' : ''}</div>
-          <div class="leaderboard-score">⬡ ${p.score || 0}</div>
-          <div class="mp-wins">${voteIcon(p.vote)}</div>
-        </div>`).join('')}`).join('');
-    } else {
-      const teamTotal = players.reduce((n, [, p]) => n + (p.score || 0), 0);
-      if (data.mode === 'cooperativo'){
-        banner = `<div class="mp-winner">🤝 ¡Equipo! Sumaron ⬡ ${teamTotal}</div>`;
-      } else {
-        const top = sorted[0][1].score || 0;
-        const winners = top > 0 ? sorted.filter(([, p]) => (p.score || 0) === top) : [];
-        banner = winners.length === 0 ? '<div class="mp-winner tie">Nadie sumó puntos esta ronda</div>'
-          : winners.length === 1 ? `<div class="mp-winner">🏆 ¡Ganó ${escapeHtml(winners[0][1].name)}!</div>`
-          : `<div class="mp-winner tie">🤝 ¡Empate entre ${winners.map(([, p]) => escapeHtml(p.name)).join(' y ')}!</div>`;
-      }
-      rowsHtml = sorted.map(([u, p], i) => `
-          <div class="leaderboard-row ${u === uid ? 'me' : ''}">
-            <div class="leaderboard-rank">${data.mode === 'competencia' && i === 0 && (p.score || 0) > 0 ? '🏆' : i + 1}</div>
-            <div class="leaderboard-name">${escapeHtml(p.name)}${u === uid ? ' (tú)' : ''}</div>
-            <div class="leaderboard-score">⬡ ${p.score || 0}</div>
-            <div class="mp-wins">${voteIcon(p.vote)}</div>
-          </div>`).join('');
+    if (onlineRoom.sbHidden !== round){                             // ventana emergente (se puede cerrar para chatear)
+      const me = data.players[uid] || {};
+      const r = buildRoundResult(data, uid);
+      showModal(`
+        <h2>🏁 Ronda ${round} terminada</h2>
+        ${r.banner}
+        <div class="leaderboard-list mp-table">${r.rowsHtml}</div>
+        <p class="level-hint">${me.vote === 'again' ? 'Esperando a que los demás elijan…' : '¿Quieres escribir en el chat antes de decidir?'}</p>
+        <div class="modal-actions" style="flex-wrap:wrap;">
+          <button class="modal-btn" id="rsChat">💬 Escribir en el chat</button>
+          <button class="modal-btn" id="rsLeave">🚪 Salir</button>
+          <button class="modal-btn primary" id="rsAgain" ${me.vote === 'again' ? 'disabled' : ''}>🔁 Otra ronda</button>
+        </div>`);
+      $('#rsChat').onclick = () => {
+        onlineRoom.sbHidden = round; hideModal();
+        const inp = document.getElementById('onlineChatInput'); if (inp) setTimeout(() => inp.focus(), 150);
+      };
+      $('#rsLeave').onclick = () => voteRoom('leave');
+      $('#rsAgain').onclick = () => voteRoom('again');
     }
-
-    showModal(`
-      <h2>🏁 Ronda ${round} terminada</h2>
-      ${banner}
-      <div class="leaderboard-list mp-table">${rowsHtml}</div>
-      ${me.vote === 'again'
-        ? '<p class="level-hint">Esperando a que los demás elijan…</p>'
-        : '<p class="level-hint">¿Quieres jugar otra ronda?</p>'}
-      <div class="modal-actions">
-        <button class="modal-btn" id="rsLeave">🚪 Salir</button>
-        <button class="modal-btn primary" id="rsAgain" ${me.vote === 'again' ? 'disabled' : ''}>🔁 Otra ronda</button>
-      </div>`);
-    $('#rsLeave').onclick = () => voteRoom('leave');
-    $('#rsAgain').onclick = () => voteRoom('again');
   }
   // Cuando todos votaron y alguien quiere seguir, el primero (por id) inicia la ronda nueva
   const voted = players.every(([, p]) => p.vote);

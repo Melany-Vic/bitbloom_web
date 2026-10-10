@@ -24,7 +24,7 @@ const L5_ROUNDS = [
   {
     goal: 'Envía un archivo por la red',
     explain: 'El archivo se divide en paquetes de datos; cada uno viaja con una dirección IP hasta el servidor y necesita una conexión estable.',
-    correct: [ {img:'assets/elements/pc.png', n:'Servidor'}, {e:'📦', n:'Paquete de datos'}, {e:'🔢', n:'Dirección IP'}, {e:'✅', n:'Conexión estable'} ],
+    correct: [ {img:'assets/elements/pc.png', n:'Servidor'}, {e:'📦', n:'Paquete de datos'}, {e:'🔢', n:'Dirección IP'}, {e:'📶', n:'Conexión estable'} ],
     wrong:   [ {img:'assets/enemies/lag.png', n:'Lag'}, {img:'assets/enemies/bug.png', n:'Bug'}, {img:'assets/enemies/corrupt.png', n:'Corrupt'} ],
     quota: 7, spawnMs: 720, speed: 2.9,
   },
@@ -175,7 +175,7 @@ function l5RoundComplete(){
     const stars = l5TotalRetries === 0 ? 3 : l5TotalRetries <= 2 ? 2 : 1;
     finishLevel(5, true, stars, '¡Reuniste todos los elementos que la red necesitaba en cada misión!');
   } else {
-    bitSay('✅ ¡Perfecto! ' + (L5_ROUNDS[l5RoundIdx - 1].explain || '') , 'talk', 5200);
+    bitSay('Correcto. ' + (L5_ROUNDS[l5RoundIdx - 1].explain || ''), 'talk', 5200);
     setTimeout(() => l5StartRound(1), 4200);
   }
 }

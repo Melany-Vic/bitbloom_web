@@ -1235,3 +1235,19 @@ body.in-game:not(.in-arena) .bit-bubble{ pointer-events:none; text-align:left; }
 body.mp-game .bit-companion{ transform:scale(.6); }
 
 .wa-btn{ width:100%; margin-top:10px; min-height:46px; background:#128c4a !important; border-color:#25d366 !important; color:#fff !important; }
+
+.ok-word{ color:#4ade80 !important; font-weight:800; }
+.bad-word{ color:#ff6b9a; font-weight:800; }
+
+.fb-summary{ display:flex; gap:16px; align-items:center; background:var(--bg-panel-2); border:1px solid var(--line); border-radius:var(--radius-sm); padding:12px; text-align:left; }
+.fb-big{ text-align:center; min-width:84px; }
+.fb-big b{ font-family:var(--font-display); font-size:34px; color:var(--spark-gold); }
+.fb-big span{ display:block; font-size:11px; color:var(--text-dim); }
+.fb-stars{ color:var(--spark-gold); letter-spacing:1px; font-size:14px; }
+.fb-bars{ flex:1; display:flex; flex-direction:column; gap:6px; }
+.fb-bar-row{ display:flex; align-items:center; gap:8px; font-size:12px; }
+.fb-bar-row .tr-bar{ flex:1; }
+.fb-list{ max-height:260px; overflow-y:auto; text-align:left; }
+
+/* Texto para buscadores/lectores de pantalla: existe en la página pero no se ve (no estorba al juego) */
+.seo-about{ position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }

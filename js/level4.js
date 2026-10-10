@@ -70,7 +70,7 @@ function l4PickDef(btn){
     beep('correct');
     l4Selected = null;
     l4Matched++;
-    { const pr = L4_PAIRS.find(p => p.key === term.dataset.key); if (pr) bitSay('✅ ' + pr.term + ': ' + pr.def, 'talk', 4200); }
+    { const pr = L4_PAIRS.find(p => p.key === term.dataset.key); if (pr) bitSay('Correcto: ' + pr.term + '. ' + pr.def, 'talk', 4200); }
     if (l4Matched === L4_PAIRS.length){
       const stars = clamp(State.lives, 1, 3);
       finishLevel(4, true, stars, '¡Reconectaste todas las funciones del sistema operativo!');

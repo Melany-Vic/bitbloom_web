@@ -146,7 +146,7 @@ function l3Answer(choice){
     addScore(120);
     beep('correct');
     if (chip) chip.classList.add('l3-correct');
-    bitSay('✅ ' + item.label + ' es ' + (item.cat === 'hardware' ? 'HARDWARE' : 'SOFTWARE') + ': ' + (L3_INFO[item.label] || (item.cat === 'hardware' ? 'es una parte física.' : 'es un programa o archivo.')), 'talk', 3000);
+    bitSay('Correcto: ' + item.label + ' es ' + (item.cat === 'hardware' ? 'HARDWARE' : 'SOFTWARE') + ': ' + (L3_INFO[item.label] || (item.cat === 'hardware' ? 'es una parte física.' : 'es un programa o archivo.')), 'talk', 3000);
   } else {
     recordMistake('hwsw', item.label + ' es ' + (item.cat === 'hardware' ? 'hardware' : 'software'));
     beep('wrong');

@@ -120,10 +120,10 @@ function ArenaTunnelScene(){
     packet.destroy();
     if (correct){
       this.score += 15; beep('correct');
-      arenaTeach(this, `✅ ¡Correcto! ${tp.name}`, tp.desc, tp.css);
+      arenaTeach(this, `Correcto · ${tp.name}`, tp.desc, '#a4f23c');
     } else {
       recordMistake('redes', `Protocolo: ${tp.tasks[this.taskIdx]} → ${tp.name}`);
-      arenaTeach(this, `❌ Era ${tp.name}, no ${pp.name}`, tp.desc, '#ff4d8f');
+      arenaTeach(this, `Incorrecto · era ${tp.name}, no ${pp.name}`, tp.desc, '#ff4d8f');
       this.loseLife();
     }
   }

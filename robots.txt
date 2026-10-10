@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Reemplaza TU-DOMINIO.com por la dirección real de tu página
+Sitemap: https://TU-DOMINIO.com/sitemap.xml

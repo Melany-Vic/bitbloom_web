@@ -47,6 +47,17 @@ const ARENA_LESSONS = {
       { icon:'🎮', title:'Cómo se juega', text:'Cambia de carril con ▲ ▼ (o ↑ ↓). Fíjate en la <b>misión</b> de arriba y en la leyenda de colores.' },
     ],
   },
+  db: {
+    topic:'bd',
+    slides: [
+      { icon:'🗄️', title:'¿Qué es una base de datos?', text:'¡Soy Data! Una <b>base de datos</b> es un lugar organizado donde se guarda información para encontrarla y usarla fácilmente: alumnos, productos, contactos…' },
+      { icon:'📋', title:'Tablas, filas y columnas', text:'Los datos se guardan en <b>tablas</b>. Cada <b>fila</b> es un registro (por ejemplo, un alumno) y cada <b>columna</b> es un campo (nombre, edad…). Cada registro tiene una <b>clave</b> única, como un id, para no confundirlo.' },
+      { icon:'💬', title:'El lenguaje SQL', text:'Para hablar con una base de datos se usa <b>SQL</b>:<br><b>SELECT</b> consulta datos · <b>INSERT</b> agrega · <b>UPDATE</b> modifica · <b>DELETE</b> borra.<br>Ejemplo: <b>SELECT * FROM datos WHERE id=1;</b>' },
+      { icon:'🛡️', title:'Seguridad, copias y nube', text:'Se protegen con <b>usuarios, contraseñas y permisos</b> (y cifrado). Las <b>copias de seguridad</b> (backup) permiten recuperar los datos si hay errores o fallas. La <b>nube</b> deja usar los datos desde cualquier lugar. El <b>análisis de datos</b> convierte registros en gráficos y decisiones.' },
+      { icon:'⚠️', title:'El problema', text:'Los problemas del sistema se acercan a la bóveda: <b>intrusos, apagones, datos desordenados…</b> Lee cada problema y toca la <b>herramienta correcta</b> antes de que llegue. ¡Resuelve 16 para proteger los datos!' },
+      { icon:'🎮', title:'Cómo se juega', text:'Toca los botones de abajo (o las teclas 1–6). Si eliges mal, las herramientas se bloquean un instante. Toca también los premios flotantes: el cristal resuelve todo, 🔗 congela el tiempo, 🖥️ da una vida y los cofres dan premios.' },
+    ],
+  },
   energy: {
     topic:'energia',
     slides: [
@@ -61,6 +72,14 @@ const ARENA_LESSONS = {
 
 /* Bancos de preguntas: q, options (la correcta va primero y se mezcla), explain */
 const QUIZ_BANKS = {
+  bd: [
+    { q:'¿Qué es una base de datos?', o:['Información organizada para encontrarla fácilmente', 'Un tipo de cable', 'Un juego de video'], e:'Una base de datos guarda información ordenada para consultarla y usarla.' },
+    { q:'En una tabla, cada fila representa…', o:['Un registro', 'Una contraseña', 'Un cable'], e:'Cada fila es un registro (por ejemplo, un alumno) y cada columna es un campo.' },
+    { q:'¿Qué instrucción de SQL se usa para consultar datos?', o:['SELECT', 'DELETE', 'INSERT'], e:'SELECT consulta; INSERT agrega y DELETE borra.' },
+    { q:'¿Para qué sirve una copia de seguridad?', o:['Recuperar los datos si algo falla', 'Hacer el juego más lento', 'Cambiar de color la pantalla'], e:'El backup guarda una copia para restaurar la información.' },
+    { q:'Los usuarios, contraseñas y permisos sirven para…', o:['Proteger el acceso a los datos', 'Ordenar las tablas', 'Borrar la nube'], e:'Controlan quién puede ver o modificar cada dato.' },
+    { q:'¿Qué significa SQL?', o:['Un lenguaje para consultar bases de datos', 'Un antivirus', 'Un tipo de monitor'], e:'SQL es el lenguaje que se usa para pedirle y cambiar datos en una base de datos.' },
+  ],
   binario: [
     { q:'¿Cuántos bits tiene un byte?', o:['8 bits', '2 bits', '16 bits'], e:'Un byte son 8 bits juntos.' },
     { q:'El sistema binario usa solo los dígitos…', o:['0 y 1', '1 al 9', '0 al 7'], e:'Los computadores solo entienden 0 y 1.' },
@@ -173,23 +192,25 @@ function arenaQuiz(scene, item, topic, cb){
       recordMistake(topic, item.q);
     }
     beep(ok ? 'correct' : 'wrong');
-    $('#aqFeedback').innerHTML = (ok ? '✅ <b>¡Correcto!</b> ' : '❌ <b>Casi.</b> ') + item.e;
+    $('#aqFeedback').innerHTML = (ok ? '<b class="ok-word">Correcto.</b> ' : '<b class="bad-word">Incorrecto.</b> ') + item.e;
     const go = $('#aqGo'); go.classList.remove('hidden');
     go.onclick = () => { hideModal(); scene.scene.resume(); if (cb) cb(ok); };
   }));
 }
 
 /* Texto flotante de enseñanza dentro del juego (se muestra unos segundos) */
-function arenaTeach(scene, title, text, color){
+function arenaTeach(scene, title, text, color, y){
   if (scene._teach){ scene._teach.destroy(); scene._teachT && scene._teachT.remove(); }
-  const box = scene.add.container(400, 400).setDepth(60);
-  const bg = scene.add.rectangle(0, 0, 640, 54, 0x0d1530, 0.94).setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(color || '#4fd6ff').color);
-  const t = scene.add.text(0, 0, `${title}\n${text}`, { fontFamily:'Arial', fontSize:13, color:'#ffffff', align:'center', wordWrap:{ width:610 } }).setOrigin(0.5);
-  box.add([bg, t]);
+  const col = color || '#4fd6ff';
+  const box = scene.add.container(400, y || 400).setDepth(60);
+  const bg = scene.add.rectangle(0, 0, 660, 60, 0x0d1530, 0.95).setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(col).color);
+  const t1 = scene.add.text(0, -13, title, { fontFamily:'Arial Black', fontSize:13, color:col, align:'center', wordWrap:{ width:640 } }).setOrigin(0.5);
+  const t2 = scene.add.text(0, 11, text, { fontFamily:'Arial', fontSize:12, color:'#ffffff', align:'center', wordWrap:{ width:640 } }).setOrigin(0.5);
+  box.add([bg, t1, t2]);
   box.setAlpha(0);
   scene.tweens.add({ targets:box, alpha:1, duration:200 });
   scene._teach = box;
-  scene._teachT = scene.time.delayedCall(4200, () => {
+  scene._teachT = scene.time.delayedCall(4600, () => {
     scene.tweens.add({ targets:box, alpha:0, duration:300, onComplete:() => box.destroy() });
   });
 }

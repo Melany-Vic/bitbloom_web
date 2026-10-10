@@ -120,7 +120,9 @@ function bitSay(text, mood = 'talk', ms = 3600){
   const bubble = $('#bitBubble');
   const avatar = $('#bitAvatar');
   companion.classList.remove('hidden');
-  bubble.textContent = text;
+  /* La palabra "Correcto" se muestra en verde; el resto del texto se escapa */
+  const safe = String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  bubble.innerHTML = safe.replace(/^(\s*)Correcto\b/, '$1<b class="ok-word">Correcto</b>');
   bubble.classList.add('show');
   avatar.classList.remove('talk','alarm');
   if (mood) avatar.classList.add(mood === 'alarm' ? 'alarm' : 'talk');

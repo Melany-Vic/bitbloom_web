@@ -93,7 +93,7 @@ function l1Place(chip, slot, correctKey){
     slot.classList.add('pop');
     addScore(100);
     beep('correct');
-    bitSay('✅ ' + partInfo.label + ': ' + partInfo.func, 'talk', 5200);
+    bitSay('Correcto: ' + partInfo.label + '. ' + partInfo.func, 'talk', 5200);
     l1SectionIndex++;
     $$('.l1-piece').forEach(c => c.classList.remove('selected'));
     if (l1SectionIndex >= L1_PARTS.length){

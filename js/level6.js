@@ -137,7 +137,7 @@ function l6Execute(){
           const stars = clamp(State.lives, 1, 3);
           finishLevel(6, true, stars, '¡Programaste correctamente cada proceso! Bit vuelve a casa sano y salvo.');
         } else {
-          bitSay('✅ ¡Secuencia perfecta! En «' + L6_ROUNDS[l6RoundIdx - 1].title + '» el orden importa: cada paso depende del anterior.', 'talk', 4200);
+          bitSay('Correcto. En «' + L6_ROUNDS[l6RoundIdx - 1].title + '» el orden importa: cada paso depende del anterior.', 'talk', 4200);
           setTimeout(l6StartRound, 3600);
         }
       } else {

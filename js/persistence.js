@@ -269,6 +269,7 @@ async function checkPassword(rec, password){
    ERRORES POR TEMA — para la sección "Temas para reforzar"
    ========================================================= */
 const MISTAKE_TOPICS = {
+  bd:       { name:'Bases de datos y SQL',           icon:'🗄️', arena:'db' },
   binario:  { name:'Bits, bytes y sistema binario', icon:'🔢', arena:'runner' },
   energia:  { name:'Energía y baterías',             icon:'⚡', arena:'energy' },
   hardware: { name:'Hardware: piezas del PC',       icon:'🖥️', level:1 },

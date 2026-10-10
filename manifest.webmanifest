@@ -1,0 +1,17 @@
+{
+  "name": "BitBloom — Aprende tecnología jugando",
+  "short_name": "BitBloom",
+  "description": "Juegos educativos para aprender hardware, software, redes, programación y bases de datos.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#050914",
+  "theme_color": "#050914",
+  "categories": ["education", "games"],
+  "icons": [
+    { "src": "assets/seo/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/seo/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

@@ -26,6 +26,9 @@ const ARENA_GAMES = [
   { key:'energy',   name:'Carga de Volt',             icon:'⚡', char:'volt',
     desc:'Vuela con Volt, recoge baterías y evita los obstáculos para llenar la batería al 100%.',
     factory:() => new ArenaVoltScene(), coins:50 },
+  { key:'db',       name:'Bóveda de Datos',            icon:'🗄️', char:'data',
+    desc:'Protege la base de datos: lee cada problema y elige la herramienta correcta (SQL, nube, seguridad, copias, análisis o tablas).',
+    factory:() => new ArenaDataScene(), coins:45 },
 ];
 
 /* ---------- Personaje elegido en la tienda + items compartidos ---------- */
