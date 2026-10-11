@@ -1277,3 +1277,12 @@ body.mp-game .bit-companion{ transform:scale(.6); }
   .arena-card-icon{ font-size:20px; margin-bottom:2px; }
   .arena-card-desc{ -webkit-line-clamp:2; margin-bottom:4px; }
 }
+
+/* Menú de pausa */
+.pause-actions{ display:flex; flex-direction:column; gap:10px; margin:12px 0 4px; }
+.pause-actions .modal-btn{ min-height:52px; font-size:14px; }
+.pause-exit{ border-color:var(--alert-magenta) !important; color:var(--alert-magenta) !important; }
+.resume-fab{ position:fixed; top:calc(10px + env(safe-area-inset-top, 0px)); left:50%; transform:translateX(-50%); z-index:950; min-height:46px; padding:10px 22px; border-radius:999px;
+  background:rgba(13,21,48,.95); border:2px solid var(--spark-gold); color:var(--text-hi); font-size:14px; box-shadow:0 0 18px rgba(255,210,63,.35); }
+.resume-fab b{ color:var(--bloom-lime); }
+#screenGame.game-paused *{ animation-play-state:paused !important; }

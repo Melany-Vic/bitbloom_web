@@ -55,7 +55,7 @@ const ARENA_LESSONS = {
       { icon:'💬', title:'El lenguaje SQL', text:'Para hablar con una base de datos se usa <b>SQL</b>:<br><b>SELECT</b> consulta datos · <b>INSERT</b> agrega · <b>UPDATE</b> modifica · <b>DELETE</b> borra.<br>Ejemplo: <b>SELECT * FROM datos WHERE id=1;</b>' },
       { icon:'🛡️', title:'Seguridad, copias y nube', text:'Se protegen con <b>usuarios, contraseñas y permisos</b> (y cifrado). Las <b>copias de seguridad</b> (backup) permiten recuperar los datos si hay errores o fallas. La <b>nube</b> deja usar los datos desde cualquier lugar. El <b>análisis de datos</b> convierte registros en gráficos y decisiones.' },
       { icon:'⚠️', title:'El problema', text:'Los problemas del sistema se acercan a la bóveda: <b>intrusos, apagones, datos desordenados…</b> Lee cada problema y toca la <b>herramienta correcta</b> antes de que llegue. ¡Resuelve 16 para proteger los datos!' },
-      { icon:'🎮', title:'Cómo se juega', text:'Toca los botones de abajo (o las teclas 1–6). Si eliges mal, las herramientas se bloquean un instante. Toca también los premios flotantes: el cristal resuelve todo, 🔗 congela el tiempo, 🖥️ da una vida y los cofres dan premios.' },
+      { icon:'🎮', title:'Cómo se juega', text:'Toca los botones de abajo (o las teclas 1–6) para elegir la herramienta. Si eliges mal, se bloquean un instante. El botón <b>7 · Premios 🎁</b> recoge los premios que flotan arriba (también puedes tocarlos): el cristal resuelve todo, 🔗 congela el tiempo, 🖥️ da una vida y los cofres dan premios.' },
     ],
   },
   energy: {

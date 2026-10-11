@@ -66,28 +66,43 @@ function ArenaDataScene(){
     this.add.rectangle(400, 412, 800, 76, 0x050914, 0.82).setStrokeStyle(2, 0x233265).setDepth(10);
     this.buttons = [];
     this.TOOLS.forEach((t, i) => {
-      const x = 95 + i * 122, y = 405;
-      const base = this.add.rectangle(x, y, 108, 64, 0x0d1530, 0.95).setStrokeStyle(2, t.color).setDepth(11);
+      const x = 76 + i * 104, y = 405;
+      const base = this.add.rectangle(x, y, 96, 64, 0x0d1530, 0.95).setStrokeStyle(2, t.color).setDepth(11);
       const img = this.add.image(x, y - 6, 'db_' + t.key).setDepth(12);
-      img.setScale(44 / img.height);
+      img.setScale(40 / img.height);
       const lab = this.add.text(x, y + 22, `${i + 1} · ${t.name}`, { fontFamily:'Arial', fontSize:11, color:'#cfe8ff' }).setOrigin(0.5).setDepth(12);
       base.setInteractive({ useHandCursor:true });
       base.on('pointerdown', () => this.useTool(i));
       this.buttons.push({ base, img, lab, color:t.color });
     });
-    this.input.keyboard.on('keydown', e => { const n = parseInt(e.key, 10); if (n >= 1 && n <= 6) this.useTool(n - 1); });
+    /* Botón 7: recoger los premios que flotan */
+    {
+      const x = 76 + 6 * 104, y = 405;
+      const base = this.add.rectangle(x, y, 96, 64, 0x2a2108, 0.95).setStrokeStyle(3, 0xffd23f).setDepth(11);
+      const ico = this.add.text(x, y - 8, '🎁', { fontSize:'28px' }).setOrigin(0.5).setDepth(12);
+      const lab = this.add.text(x, y + 22, '7 · Premios', { fontFamily:'Arial', fontSize:11, color:'#ffd23f' }).setOrigin(0.5).setDepth(12);
+      base.setInteractive({ useHandCursor:true });
+      base.on('pointerdown', () => this.useReward());
+      this.rewardBtn = { base, ico };
+    }
+    this.input.keyboard.on('keydown', e => {
+      const n = parseInt(e.key, 10);
+      if (n >= 1 && n <= 6) this.useTool(n - 1);
+      else if (n === 7) this.useReward();
+    });
 
     // Marcadores
-    this.progText = this.add.text(400, 14, '', { fontFamily:'Arial Black', fontSize:15, color:'#ffffff', stroke:'#050914', strokeThickness:4 }).setOrigin(0.5, 0).setDepth(20);
-    this.comboText = this.add.text(790, 14, '', { fontFamily:'Arial Black', fontSize:14, color:'#ffd23f', stroke:'#050914', strokeThickness:4 }).setOrigin(1, 0).setDepth(20);
-    this.add.text(10, 14, 'Lee el problema y toca la herramienta correcta (o teclas 1–6)', { fontFamily:'monospace', fontSize:11, color:'#cfe8ff', stroke:'#050914', strokeThickness:3 }).setDepth(20);
+    this.progText = this.add.text(400, 10, '', { fontFamily:'Arial Black', fontSize:15, color:'#ffffff', stroke:'#050914', strokeThickness:4 }).setOrigin(0.5, 0).setDepth(20);
+    this.comboText = this.add.text(790, 12, '', { fontFamily:'Arial Black', fontSize:14, color:'#ffd23f', stroke:'#050914', strokeThickness:4 }).setOrigin(1, 0).setDepth(20);
+    /* Instrucciones: en una línea propia, debajo del contador de problemas resueltos */
+    this.add.text(400, 34, 'Toca la herramienta correcta (teclas 1–6) · Toca 7 para recoger premios', { fontFamily:'monospace', fontSize:11, color:'#cfe8ff', stroke:'#050914', strokeThickness:3 }).setOrigin(0.5, 0).setDepth(20);
 
     this.problems = [];
     this.bonuses = [];
     this.lives = 3 + ARENA_BONUS.lives; this.score = 0; this.elapsed = 0; this.solved = 0; this.streak = 0;
     this.limit = 150 * ARENA_BONUS.time;
     this.spawnIn = 1200; this.bonusIn = 9000; this.freezeUntil = 0; this.jamUntil = 0;
-    this.lastIdx = -1; this.side = 0; this.ended = false;
+    this.lastIdx = -1; this.side = 0; this.ended = false; this.bonusList = [];
     this.qs = arenaPickQuestions('bd', 2);
     ArenaHUD.setLives(this.lives); ArenaHUD.setScore(0); ArenaHUD.setTimer(100);
     this.refreshText();
@@ -189,9 +204,23 @@ function ArenaDataScene(){
     const o = this.add.image(fromLeft ? -40 : 840, Phaser.Math.Between(70, 130), key).setDepth(8);
     o.setScale((k === 'coin' ? 32 : 50) / o.height);
     o.setInteractive(new Phaser.Geom.Rectangle(-o.width * 0.3, -o.height * 0.3, o.width * 1.6, o.height * 1.6), Phaser.Geom.Rectangle.Contains);
+    o.kind = k;
+    this.bonusList.push(o);
     o.on('pointerdown', () => this.takeBonus(o, k));
     this.tweens.add({ targets:o, x:fromLeft ? 840 : -40, duration:7000, onComplete:() => o.destroy() });
     this.tweens.add({ targets:o, y:o.y + 14, duration:600, yoyo:true, repeat:-1, ease:'Sine.inOut' });
+  }
+  /* Botón 7 / tecla 7: recoge el premio flotante más cercano al centro */
+  useReward(){
+    if (this.ended) return;
+    this.bonusList = this.bonusList.filter(o => o.active);
+    this.tweens.add({ targets:[this.rewardBtn.base, this.rewardBtn.ico], scale:'*=1.12', duration:70, yoyo:true });
+    if (!this.bonusList.length){
+      arenaTeach(this, 'Todavía no hay premios', 'Cuando aparezca uno flotando arriba, toca 7 para recogerlo.', '#ffd23f', 60);
+      return;
+    }
+    const o = this.bonusList.sort((a, b) => Math.abs(a.x - 400) - Math.abs(b.x - 400))[0];
+    this.takeBonus(o, o.kind);
   }
   takeBonus(o, k){
     if (!o.active) return;
@@ -226,6 +255,9 @@ function ArenaDataScene(){
     this.bonusIn -= delta;
     if (this.bonusIn <= 0){ this.spawnBonus(); this.bonusIn = Phaser.Math.Between(8000, 12000); }
 
+    // el botón 7 brilla cuando hay un premio disponible
+    const hasReward = this.bonusList.some(o => o.active);
+    if (this.rewardBtn) this.rewardBtn.base.setStrokeStyle(hasReward ? 5 : 3, hasReward ? 0xffffff : 0xffd23f);
     this.problems.slice().forEach(q => {
       if (!frozen) q.c.x += (q.fromLeft ? 1 : -1) * q.speed * dt;
       const left = Math.abs(q.stopX - q.c.x);

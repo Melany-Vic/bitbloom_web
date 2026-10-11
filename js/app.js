@@ -171,6 +171,7 @@ function enterGameMode(){
 function leaveGameMode(){
   if (!document.body.classList.contains('in-game')) return;
   document.body.classList.remove('in-game', 'in-arena');
+  if (typeof gamePauseReset === 'function') gamePauseReset();
   if (typeof updateGiftFab === 'function') setTimeout(updateGiftFab, 0);
   document.body.classList.remove('mp-game');
   const hint = document.getElementById('arenaRotateHint');
@@ -441,24 +442,44 @@ function shakeHud(){
 function startTimer(seconds, onTick, onEnd){
   stopActiveTimerOnly();
   seconds = seconds * 1.35 * (State.timeBonus || 1) * (State.levelTimeBoost || 1);   // +35% de tiempo en todos los niveles del mapa
-  const total = seconds * 1000;
-  const start = Date.now();
+  const ctx = { total: seconds * 1000, start: Date.now(), onTick, onEnd };
+  State.timerCtx = ctx;
   const fill = $('#timerFill');
   fill.classList.remove('warn');
   fill.style.width = '100%';
+  runTimerLoop(ctx);
+}
+function runTimerLoop(ctx){
+  const fill = $('#timerFill');
   State.activeTimer = setInterval(() => {
-    const elapsed = Date.now() - start;
-    const remaining = Math.max(0, total - elapsed);
-    const pct = (remaining / total) * 100;
+    const elapsed = Date.now() - ctx.start;
+    const remaining = Math.max(0, ctx.total - elapsed);
+    const pct = (remaining / ctx.total) * 100;
     fill.style.width = pct + '%';
     if (pct < 30) fill.classList.add('warn');
-    if (onTick) onTick(remaining / 1000, pct);
+    if (ctx.onTick) ctx.onTick(remaining / 1000, pct);
     if (remaining <= 0){
       clearInterval(State.activeTimer);
       State.activeTimer = null;
-      if (onEnd) onEnd();
+      State.timerCtx = null;
+      if (ctx.onEnd) ctx.onEnd();
     }
   }, 100);
+}
+/* Pausa / reanuda el contador de tiempo del nivel (sin perder el tiempo restante) */
+function pauseLevelTimer(){
+  if (State.activeTimer && State.timerCtx){
+    clearInterval(State.activeTimer); State.activeTimer = null;
+    State.timerCtx.pausedAt = Date.now();
+  }
+}
+function resumeLevelTimer(){
+  const ctx = State.timerCtx;
+  if (ctx && ctx.pausedAt && !State.activeTimer){
+    ctx.start += Date.now() - ctx.pausedAt;
+    ctx.pausedAt = 0;
+    runTimerLoop(ctx);
+  }
 }
 function stopActiveTimerOnly(){
   if (State.activeTimer){ clearInterval(State.activeTimer); State.activeTimer = null; }
@@ -562,6 +583,9 @@ function launchLevel(id){
 }
 
 function exitGame(){
+  openPauseMenu('level');
+}
+function exitGameOld(){
   showModal(`
     <h2>¿Salir de la misión?</h2>
     <p>Perderás el progreso de este intento.</p>
@@ -608,7 +632,7 @@ window.addEventListener('DOMContentLoaded', () => {
   $('#btnTeacherBack').addEventListener('click', goMenu);
   $('#btnArena').addEventListener('click', showArena);
   $('#btnArenaBack').addEventListener('click', goMenu);
-  $('#btnArenaGameExit').addEventListener('click', exitArenaGame);
+  $('#btnArenaGameExit').addEventListener('click', () => openPauseMenu('arena'));
   $('#btnOnlineSetupBack').addEventListener('click', goMenu);
   $('#btnOnlineRoomLeave').addEventListener('click', () => leaveOnlineRoom(false));
   $('#btnClassCode').addEventListener('click', showClassCodeScreen);

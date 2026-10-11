@@ -107,6 +107,18 @@ function l5StartRound(attempt){
   startTimer(L5_ROUND_SECONDS, null, () => l5RoundRetry('¡Se acabaron los 3 minutos! Vamos de nuevo con esta misma ronda.'));
 }
 
+/* Pausa del nivel 5 (caída de objetos) */
+function l5Pause(){
+  if (l5RafId){ cancelAnimationFrame(l5RafId); l5RafId = null; }
+  if (l5SpawnTimer){ clearInterval(l5SpawnTimer); l5SpawnTimer = null; }
+}
+function l5Resume(){
+  const round = L5_ROUNDS[l5RoundIdx];
+  if (!round || l5RafId || l5SpawnTimer) return;
+  l5SpawnTimer = setInterval(() => l5Spawn(round), round.spawnMs);
+  l5RafId = requestAnimationFrame(() => l5Tick(round));
+}
+
 function l5UpdateProgress(round){
   $('#l5Progress').textContent = `Atrapados: ${l5Caught} / ${round.quota}`;
 }

@@ -27,7 +27,7 @@ const ARENA_GAMES = [
     desc:'Vuela con Volt, recoge baterías y evita los obstáculos para llenar la batería al 100%.',
     factory:() => new ArenaVoltScene(), coins:50 },
   { key:'db',       name:'Bóveda de Datos',            icon:'🗄️', char:'data',
-    desc:'Protege la base de datos: lee cada problema y elige la herramienta correcta (SQL, nube, seguridad, copias, análisis o tablas).',
+    desc:'Protege la base de datos: lee cada problema y elige la herramienta correcta (SQL, nube, seguridad, copias, análisis o tablas). El botón 7 recoge premios.',
     factory:() => new ArenaDataScene(), coins:45 },
 ];
 
@@ -308,6 +308,9 @@ function arenaGameOver(won, score, message){
 }
 
 function exitArenaGame(){
+  let score = 0;
+  try { const sc = arenaLiveScene(); score = Math.floor((sc && sc.score) || 0); } catch (e) {}
   if (arenaPhaserGame){ arenaPhaserGame.destroy(true); arenaPhaserGame = null; }
+  if (window.onlineRoom && window.onlineRoom.active){ reportRoomScore(score); return; }   // vuelve a la sala sin bloquear a los demás
   showArena();
 }
