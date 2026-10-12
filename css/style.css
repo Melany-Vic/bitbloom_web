@@ -1286,3 +1286,18 @@ body.mp-game .bit-companion{ transform:scale(.6); }
   background:rgba(13,21,48,.95); border:2px solid var(--spark-gold); color:var(--text-hi); font-size:14px; box-shadow:0 0 18px rgba(255,210,63,.35); }
 .resume-fab b{ color:var(--bloom-lime); }
 #screenGame.game-paused *{ animation-play-state:paused !important; }
+
+.lb-me{ display:flex; flex-direction:column; gap:4px; font-size:14px; border-color:var(--bloom-lime) !important; }
+.lb-me small{ color:var(--text-dim); }
+.leaderboard-name small{ display:block; color:var(--text-faint); font-size:10.5px; font-weight:400; }
+
+/* Mi música */
+.music-list{ display:flex; flex-direction:column; gap:8px; margin:10px 0; text-align:left; max-height:42vh; overflow-y:auto; }
+.music-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--bg-panel-2); border:1px solid var(--line); border-radius:var(--radius-sm); padding:8px 10px; }
+.music-name{ display:flex; flex-direction:column; font-size:13px; min-width:0; }
+.music-name small{ color:var(--text-dim); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:48vw; }
+.music-btns{ display:flex; gap:6px; flex:none; }
+.music-b{ min-height:40px; min-width:40px; padding:6px 10px; border-radius:var(--radius-sm); background:var(--bg-panel); border:1px solid var(--line); color:var(--text-hi); font-size:13px; }
+.music-b.pick{ border-color:var(--circuit-cyan); color:var(--circuit-cyan); }
+.music-vol{ display:flex; align-items:center; gap:10px; }
+.music-vol input[type=range]{ flex:1; }

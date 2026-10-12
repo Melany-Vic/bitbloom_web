@@ -11,6 +11,7 @@ function gamePause(kind){
   if (kind === 'arena'){
     const sc = (typeof arenaLiveScene === 'function') ? arenaLiveScene() : null;
     if (sc && sc.scene && sc.scene.isActive()){ sc.scene.pause(); GamePause.scene = sc; }
+    musicPause();
   } else {
     pauseLevelTimer();
     if (State.currentLevelId === 5 && typeof l5Pause === 'function') l5Pause();
@@ -25,6 +26,7 @@ function gameResume(){
   removeResumeFab();
   if (kind === 'arena'){
     if (GamePause.scene && GamePause.scene.scene){ try { GamePause.scene.scene.resume(); } catch (e) {} }
+    musicResume();
     GamePause.scene = null;
   } else {
     resumeLevelTimer();
@@ -62,8 +64,10 @@ function openPauseMenu(kind){
       <button class="modal-btn" id="pmKeep">⏸ Seguir en pausa</button>
       <button class="modal-btn pause-exit" id="pmExit">🚪 Salir del juego</button>
     </div>
+    ${kind === 'arena' && MusicState.audio ? `<div class="music-vol" style="margin-top:10px;"><span>🎵</span><input type="range" id="pmVol" min="0" max="1" step="0.05" value="${musicSettings().vol}"><button class="music-b" id="pmMute">${musicSettings().muted ? '🔇' : '🔊'}</button></div>` : ''}
     <p class="level-hint" id="pmNote" style="min-height:18px; margin:8px 0 0;"></p>
   `);
+  if ($('#pmVol')){ $('#pmVol').oninput = e => musicSetVolume(+e.target.value); $('#pmMute').onclick = () => { $('#pmMute').textContent = musicToggleMute() ? '🔇' : '🔊'; }; }
   $('#pmResume').onclick = () => { hideModal(); gameResume(); };
   $('#pmKeep').onclick = () => { hideModal(); showResumeFab(); };      // el menú se cierra pero el juego sigue detenido
   let armed = false;

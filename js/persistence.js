@@ -94,6 +94,7 @@ function recordActivity(kind, key, won, score, stars, coins){
   d.plays++;
   if (won) d.wins++;
   d.points += score;
+  if (kind !== 'level') State.extraPoints = (State.extraPoints || 0) + score;   // los puntos de niveles ya suman en State.score
   d.coins += (coins || 0);
 }
 
@@ -114,6 +115,7 @@ function buildSaveData(){
     skin: State.skin || 'bit',
     realName: State.realName || null,
     mistakes: State.mistakes || {},
+    extraPoints: State.extraPoints || 0,
     inv: State.inv || { gems:0, extraLives:0, extraTime:0 },
     lessonsSeen: State.lessonsSeen || {},
     history: State.history || {},
@@ -135,7 +137,11 @@ async function saveProgress(){
   } catch (e) {
     // Sin conexión a la base de datos: queda la copia local.
   }
+  if (typeof scheduleLeaderboardSync === 'function') scheduleLeaderboardSync();
 }
+
+/* Total completo de puntos del jugador: niveles + juegos de la Arena + misiones/actividades */
+function totalPoints(){ return (State.score || 0) + (State.extraPoints || 0); }
 
 function applySaveData(data){
   State.score = data.score || 0;
@@ -156,6 +162,10 @@ function applySaveData(data){
   State.mistakes = data.mistakes || {};
   State.inv = data.inv || { gems:0, extraLives:0, extraTime:0 };
   State.lessonsSeen = data.lessonsSeen || {};
+  /* Puntos de juegos de la Arena, misiones y actividades (los niveles ya están en State.score).
+     En cuentas antiguas se reconstruyen desde el historial por día. */
+  State.extraPoints = (data.extraPoints != null) ? data.extraPoints :
+    Object.values(data.history || {}).reduce((n, d) => n + ['arena', 'side'].reduce((m, k) => m + Object.values(d[k] || {}).reduce((x, g) => x + (g.points || 0), 0), 0), 0);
   const acc = document.getElementById('bitAccessory');
   if (acc) acc.classList.toggle('hidden', !State.shopOwned.has('accessory'));
 }
@@ -199,6 +209,7 @@ function resetLocalState(){
   State.mistakes = {};
   State.inv = { gems:0, extraLives:0, extraTime:0 };
   State.lessonsSeen = {};
+  State.extraPoints = 0;
   const acc = document.getElementById('bitAccessory');
   if (acc) acc.classList.add('hidden');
 }

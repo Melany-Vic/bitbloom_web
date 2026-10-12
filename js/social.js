@@ -57,7 +57,8 @@ async function enterAccount(rec){
   setActiveAccount(State.profile);
   registerDeviceAccount(State.profile);
   refreshProfileUI();
-  $('#menuCoins').textContent = State.coins;
+  refreshCurrencyUI();
+  submitToLeaderboard();
   goMenu();
 }
 
@@ -231,30 +232,50 @@ async function showProfileScreen(mode){
    Visible para cualquiera que juegue este BitBloom. Guarda el
    mejor puntaje de cada nombre de jugador.
    ========================================================= */
-const LEADERBOARD_KEY = 'bitbloom-leaderboard';
+const LEADERBOARD_KEY = 'bitbloom-leaderboard';   // lista antigua (única); se sigue leyendo para no perder datos
+let _lbLastSent = -1, _lbTimer = null, _lbAuto = null;
+
+/* Cada jugador guarda su propia ficha ("lb:usuario"), así no se pisan los datos entre jugadores */
+function lbKey(){ return 'lb:' + slugifyProfileName(State.profile.name); }
 
 async function submitToLeaderboard(){
   try {
-    if (!AppStorage || !State.profile) return;
-    let list = [];
-    try {
-      const res = await AppStorage.get(LEADERBOARD_KEY, true);
-      if (res && res.value) list = JSON.parse(res.value);
-    } catch (e) { list = []; }
+    if (!AppStorage || !State.profile) return false;
+    const entry = {
+      name: State.profile.name, role: State.profile.role,
+      score: totalPoints(), levelScore: State.score || 0, extraScore: State.extraPoints || 0,
+      coins: State.coins, date: Date.now(),
+    };
+    const ok = await AppStorage.set(lbKey(), JSON.stringify(entry), true);
+    if (ok) _lbLastSent = entry.score;
+    return !!ok;
+  } catch (e) { return false; }
+}
 
-    const idx = list.findIndex(p => p.name === State.profile.name && p.role === State.profile.role);
-    const entry = { name: State.profile.name, role: State.profile.role, score: State.score, coins: State.coins, date: Date.now() };
-    if (idx >= 0){
-      if (entry.score >= list[idx].score) list[idx] = entry;
-    } else {
-      list.push(entry);
+/* Se llama cada vez que se guarda el progreso: envía los puntos nuevos poco después */
+function scheduleLeaderboardSync(){
+  if (!State.profile || totalPoints() === _lbLastSent) return;
+  clearTimeout(_lbTimer);
+  _lbTimer = setTimeout(submitToLeaderboard, 1200);
+}
+
+async function fetchLeaderboard(){
+  const rows = await AppStorage.list('lb:', true);
+  const list = [];
+  rows.forEach(r => { try { const o = JSON.parse(r.value); if (o && o.name) list.push(o); } catch (e) {} });
+  // lista antigua: solo se agregan jugadores que aún no tienen ficha nueva
+  try {
+    const res = await AppStorage.get(LEADERBOARD_KEY, true);
+    if (res && res.value){
+      JSON.parse(res.value).forEach(o => {
+        const i = list.findIndex(p => slugifyProfileName(p.name) === slugifyProfileName(o.name));
+        if (i < 0) list.push(o);
+        else if ((o.score || 0) > (list[i].score || 0)) list[i].score = o.score;
+      });
     }
-    list.sort((a, b) => b.score - a.score);
-    list = list.slice(0, 30);
-    await AppStorage.set(LEADERBOARD_KEY, JSON.stringify(list), true);
-  } catch (e) {
-    // Sin conexión a la base de datos compartida; se omite el envío.
-  }
+  } catch (e) {}
+  list.sort((a, b) => (b.score || 0) - (a.score || 0) || (b.coins || 0) - (a.coins || 0));
+  return list;
 }
 
 async function showLeaderboardScreen(){
@@ -262,34 +283,71 @@ async function showLeaderboardScreen(){
   bitHide();
   const wrap = $('#leaderboardWrap');
   wrap.innerHTML = `<p class="level-hint">Cargando clasificación compartida...</p>`;
+  await submitToLeaderboard();          // primero se envían tus puntos actuales
   await renderLeaderboard();
+  // mientras la pantalla está abierta, se actualiza sola cada 20 s
+  clearInterval(_lbAuto);
+  _lbAuto = setInterval(() => {
+    const scr = document.getElementById('screenLeaderboard');
+    if (!scr || scr.classList.contains('hidden')){ clearInterval(_lbAuto); return; }
+    renderLeaderboard(true);
+  }, 20000);
 }
 
-async function renderLeaderboard(){
+/* Botón 🔄 Actualizar: envía tus puntos y vuelve a leer la tabla, mostrando el avance */
+async function refreshLeaderboard(){
+  const btn = $('#btnLeaderboardRefresh');
+  if (!btn || btn.disabled) return;
+  btn.disabled = true; btn.textContent = '⏳ Actualizando…';
+  try {
+    await submitToLeaderboard();
+    const ok = await renderLeaderboard();
+    showToast(ok ? '🔄 Clasificación actualizada' : 'No se pudo actualizar. Revisa tu conexión.');
+  } finally {
+    btn.disabled = false; btn.textContent = '🔄 Actualizar';
+  }
+}
+
+/* Devuelve true si pudo mostrar la tabla */
+async function renderLeaderboard(silent){
   const wrap = $('#leaderboardWrap');
   try {
     if (!AppStorage) throw new Error('sin storage');
-    const res = await AppStorage.get(LEADERBOARD_KEY, true);
-    const list = (res && res.value) ? JSON.parse(res.value) : [];
+    const list = await fetchLeaderboard();
     if (!list.length){
-      wrap.innerHTML = `<p class="level-hint">Todavía nadie aparece en la clasificación. ¡Completá un nivel para ser el primero!</p>`;
-      return;
+      wrap.innerHTML = `<p class="level-hint">Todavía nadie aparece en la clasificación. ¡Juega un nivel o un desafío para ser el primero!</p>`;
+      return true;
     }
+    const mySlug = State.profile ? slugifyProfileName(State.profile.name) : null;
+    const myIdx = mySlug ? list.findIndex(p => slugifyProfileName(p.name) === mySlug) : -1;
+    const mine = myIdx >= 0 ? list[myIdx] : null;
+    const time = new Date().toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
     wrap.innerHTML = `
-      <p class="level-hint">Visible para todos los que jueguen BitBloom. Se actualiza con tu mejor puntaje.</p>
+      ${State.profile ? `
+      <div class="online-panel lb-me">
+        <div><b>Tu posición:</b> ${myIdx >= 0 ? '#' + (myIdx + 1) + ' de ' + list.length : 'aún sin puntos'}</div>
+        <div><b>Tus puntos totales:</b> ⬡ ${totalPoints()} <small>(niveles ${State.score || 0} + juegos y misiones ${State.extraPoints || 0})</small></div>
+      </div>` : ''}
+      <p class="level-hint">Suma <b>todos</b> tus puntos: niveles, juegos de la Arena, misiones y actividades. Actualizada a las ${time}.</p>
       <div class="leaderboard-list">
-        ${list.map((p, i) => `
-          <div class="leaderboard-row ${State.profile && p.name === State.profile.name ? 'me' : ''}">
-            <div class="leaderboard-rank">${i + 1}</div>
-            <div class="leaderboard-name">${p.role === 'profesor' ? '🧑‍🏫' : '🎓'} ${escapeHtml(p.name)}</div>
-            <div class="leaderboard-score">⬡ ${p.score}</div>
-            <div class="leaderboard-coins">🪙 ${p.coins}</div>
-          </div>
-        `).join('')}
+        ${list.slice(0, 50).map((p, i) => {
+          const isMe = mySlug && slugifyProfileName(p.name) === mySlug;
+          const total = isMe ? Math.max(p.score || 0, totalPoints()) : (p.score || 0);
+          return `
+          <div class="leaderboard-row ${isMe ? 'me' : ''}">
+            <div class="leaderboard-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</div>
+            <div class="leaderboard-name">${p.role === 'profesor' ? '🧑‍🏫' : '🎓'} ${escapeHtml(p.name)}${p.levelScore != null ? ' <small>niveles ' + p.levelScore + ' · juegos ' + (p.extraScore || 0) + '</small>' : ''}</div>
+            <div class="leaderboard-score">⬡ ${total}</div>
+            <div class="leaderboard-coins">🪙 ${p.coins || 0}</div>
+          </div>`;
+        }).join('')}
       </div>
+      ${mine || !State.profile ? '' : ''}
     `;
+    return true;
   } catch (e) {
-    wrap.innerHTML = `<p class="level-hint">No se pudo cargar la clasificación compartida en este momento (esto funciona cuando el juego corre dentro de Claude). Intentá de nuevo más tarde.</p>`;
+    if (!silent) wrap.innerHTML = `<p class="level-hint">No se pudo cargar la clasificación en este momento. Revisa tu conexión e inténtalo con el botón 🔄 Actualizar.</p>`;
+    return false;
   }
 }
 
@@ -342,7 +400,7 @@ function showProgressScreen(){
     <div class="online-panel">
       <h3 class="prog-h">⬡ Resumen de ${escapeHtml(State.profile.name)}</h3>
       <div class="prog-stats">
-        <div class="prog-stat"><b>${State.score}</b><span>puntos totales</span></div>
+        <div class="prog-stat"><b>${totalPoints()}</b><span>puntos totales</span></div>
         <div class="prog-stat"><b>${State.coins}</b><span>monedas</span></div>
         <div class="prog-stat"><b>${dayKeys.length}</b><span>días jugados</span></div>
         <div class="prog-stat"><b>${totalPlays}</b><span>partidas</span></div>

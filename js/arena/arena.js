@@ -92,7 +92,10 @@ function showArena(){
   $('#arenaCoins').textContent = State.coins;
   const wrap = $('#arenaWrap');
   wrap.innerHTML = `<p class="level-hint">Desafíos extra, más difíciles, pensados para competir o jugar en equipo. Ganás monedas por completarlos.</p>
+    <div style="text-align:center; margin:-4px 0 12px;"><button class="modal-btn" id="btnMyMusic">🎵 Mi música</button></div>
     <div class="arena-grid" id="arenaGrid"></div>`;
+  $('#btnMyMusic').onclick = openMusicSettings;
+  musicPrepare();
   const grid = $('#arenaGrid');
   ARENA_GAMES.forEach(g => {
     const card = el('div', 'arena-card');
@@ -136,7 +139,8 @@ async function launchArenaGame(key){
   arenaCurrentKey = key;
   const g = ARENA_GAMES.find(x => x.key === key);
   showScreen('#screenArenaGame');
-  enterGameMode(); document.body.classList.add('in-arena');   // aviso/bloqueo horizontal en celular y tablet (se llama antes de cualquier await)
+  enterGameMode(); document.body.classList.add('in-arena');
+  musicStartSync(key);   // tu música (si elegiste una); debe iniciarse al tocar jugar   // aviso/bloqueo horizontal en celular y tablet (se llama antes de cualquier await)
   $('#arenaGameTitle').textContent = g.name.toUpperCase();
   $('#arenaStage').innerHTML = '<div class="arena-loading" id="arenaLoading">Cargando el motor del juego…</div>';
   /* Premios guardados de los cofres (no se usan dentro de salas en línea) */
@@ -256,6 +260,7 @@ function addArenaTouchControls(scene, opts){
   scene.events.once('destroy', () => wrap.remove());
 }
 function arenaGameOver(won, score, message){
+  musicStop();
   if (arenaPhaserGame){ arenaPhaserGame.destroy(true); arenaPhaserGame = null; }
   const g = ARENA_GAMES.find(x => x.key === arenaCurrentKey);
   const coinsEarned = won ? g.coins : Math.round(g.coins * 0.2);

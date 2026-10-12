@@ -20,6 +20,7 @@ function consumeInv(key){
 
 function refreshCurrencyUI(){
   const c = document.getElementById('menuCoins'); if (c) c.textContent = State.coins;
+  const tsc = document.getElementById('totalScore'); if (tsc) tsc.textContent = totalPoints();
   const g = document.getElementById('menuGems');  if (g) g.textContent = ensureInv().gems;
   const sc = document.getElementById('shopCoins'); if (sc) sc.textContent = State.coins;
   const sg = document.getElementById('shopGems');  if (sg) sg.textContent = ensureInv().gems;

@@ -69,6 +69,7 @@ const State = {
   sideQuests: new Set(),
   arenaBest: {},
   skin: 'bit', // personaje equipado (tienda)
+  extraPoints: 0, // puntos de la Arena, misiones y actividades (los niveles suman en score)
   inv: { gems:0, extraLives:0, extraTime:0 }, // premios de cofres
   lessonsSeen: {},
   levelTimeBoost: 1,
@@ -172,6 +173,7 @@ function leaveGameMode(){
   if (!document.body.classList.contains('in-game')) return;
   document.body.classList.remove('in-game', 'in-arena');
   if (typeof gamePauseReset === 'function') gamePauseReset();
+  if (typeof musicStop === 'function') musicStop();
   if (typeof updateGiftFab === 'function') setTimeout(updateGiftFab, 0);
   document.body.classList.remove('mp-game');
   const hint = document.getElementById('arenaRotateHint');
@@ -193,7 +195,7 @@ function goLevels(){
   stopActiveTimer();
   renderLevelMap();
   showScreen('#screenLevels');
-  $('#totalScore').textContent = State.score;
+  $('#totalScore').textContent = totalPoints();
   $('#levelsCoins').textContent = State.coins;
   bitSay('¡Elige un nivel! Cada uno enseña algo nuevo sobre la tecnología.', 'talk');
 }
@@ -627,7 +629,7 @@ window.addEventListener('DOMContentLoaded', () => {
   $('#btnLeaderboardBack').addEventListener('click', goMenu);
   $('#btnProgress').addEventListener('click', showProgressScreen);
   $('#btnProgressBack').addEventListener('click', goMenu);
-  $('#btnLeaderboardRefresh').addEventListener('click', renderLeaderboard);
+  $('#btnLeaderboardRefresh').addEventListener('click', refreshLeaderboard);
   $('#btnTeacher').addEventListener('click', showTeacherPanel);
   $('#btnTeacherBack').addEventListener('click', goMenu);
   $('#btnArena').addEventListener('click', showArena);
