@@ -15,20 +15,6 @@ function showTeacherPanel(){
   showScreen('#screenTeacher');
   bitHide();
   const wrap = $('#teacherWrap');
-  const suggested = randomClassCode();
-  const questionBlock = (n) => `
-    <div class="teacher-question">
-      <label class="profile-label">Pregunta ${n}</label>
-      <input type="text" class="profile-input tq-text" data-q="${n}" placeholder="Escribí la pregunta">
-      ${[0,1,2,3].map(i => `
-        <div class="teacher-option-row">
-          <input type="radio" name="correct-${n}" value="${i}" ${i === 0 ? 'checked' : ''} class="tq-correct" data-q="${n}">
-          <input type="text" class="profile-input tq-opt" data-q="${n}" data-opt="${i}" placeholder="Opción ${i + 1}${i === 0 ? ' (marcá la correcta con el círculo)' : ''}">
-        </div>
-      `).join('')}
-    </div>
-  `;
-
   wrap.innerHTML = `
     <div class="online-panel">
       <button class="modal-btn" id="teacherFeedbackBtn">💬 Ver opiniones de los usuarios</button>
@@ -38,20 +24,10 @@ function showTeacherPanel(){
       <p class="level-hint" id="teacherClassesMsg">Cargando…</p>
       <div id="teacherClassesList"></div>
     </div>
-    <p class="level-hint">Creá una actividad de 3 preguntas para tus estudiantes. Compartiles el código de clase para que la jueguen desde "Código de clase" en el menú.</p>
-    <div class="teacher-form">
-      <label class="profile-label">Código de clase</label>
-      <input type="text" id="teacherCode" class="profile-input" maxlength="8" value="${suggested}" style="text-transform:uppercase;">
-      ${questionBlock(1)}
-      ${questionBlock(2)}
-      ${questionBlock(3)}
-      <button class="modal-btn primary profile-save-btn" id="teacherSaveBtn">Guardar actividad ▶</button>
-      <p class="level-hint" id="teacherStatus"></p>
-    </div>
+    <div id="teacherBuilder"></div>
   `;
-
-  $('#teacherSaveBtn').addEventListener('click', saveTeacherActivity);
   const fbBtn = $('#teacherFeedbackBtn'); if (fbBtn) fbBtn.onclick = showFeedbackInbox;
+  tbInit();
   loadTeacherClasses();
 }
 
@@ -64,9 +40,11 @@ async function getTeacherCodes(){
   } catch (e) {}
   return [];
 }
-async function registerTeacherCode(code){
+async function registerTeacherCode(code, title){
   const list = await getTeacherCodes();
-  if (!list.find(c => c.code === code)) list.push({ code, createdAt: Date.now() });
+  const ex = list.find(c => c.code === code);
+  if (!ex) list.push({ code, createdAt: Date.now(), title: title || '' });
+  else if (title) ex.title = title;
   try { await AppStorage.set(teacherIndexKey(), JSON.stringify(list), true); } catch (e) {}
 }
 async function loadTeacherClasses(){
@@ -78,46 +56,11 @@ async function loadTeacherClasses(){
   box.innerHTML = '';
   list.slice().reverse().forEach(c => {
     const row = el('div', 'online-player-row', `
-      <span class="p-name">Código <b>${escapeHtml(c.code)}</b> · ${new Date(c.createdAt).toLocaleDateString('es')}</span>
+      <span class="p-name">Código <b>${escapeHtml(c.code)}</b>${c.title ? ' · ' + escapeHtml(c.title) : ''} · ${new Date(c.createdAt).toLocaleDateString('es')}</span>
       <button class="modal-btn" style="padding:6px 12px; font-size:11px;">Ver resultados ▶</button>`);
     row.querySelector('button').addEventListener('click', () => showTeacherResults(c.code));
     box.appendChild(row);
   });
-}
-
-async function saveTeacherActivity(){
-  const code = $('#teacherCode').value.trim().toUpperCase();
-  const status = $('#teacherStatus');
-  if (!code){ status.textContent = 'Ingresá un código de clase.'; return; }
-
-  const questions = [];
-  for (let n = 1; n <= 3; n++){
-    const text = $(`.tq-text[data-q="${n}"]`).value.trim();
-    const opts = $$(`.tq-opt[data-q="${n}"]`).map(inp => inp.value.trim());
-    const correctInput = $(`input.tq-correct[data-q="${n}"]:checked`);
-    const correct = correctInput ? Number(correctInput.value) : 0;
-    if (!text || opts.some(o => !o)){
-      status.textContent = `Completá el texto y las 4 opciones de la pregunta ${n}.`;
-      return;
-    }
-    questions.push({ q: text, options: opts, correct });
-  }
-
-  status.textContent = 'Guardando...';
-  try {
-    if (!AppStorage) throw new Error('sin storage');
-    const payload = {
-      teacher: State.profile ? State.profile.name : 'Profesor/a',
-      questions,
-      createdAt: Date.now(),
-    };
-    await AppStorage.set('class:' + code, JSON.stringify(payload), true);
-    await registerTeacherCode(code);
-    loadTeacherClasses();
-    status.textContent = `¡Listo! Compartí el código "${code}" con tus estudiantes.`;
-  } catch (e) {
-    status.textContent = 'No se pudo guardar (esto funciona cuando el juego corre dentro de Claude). Intentá de nuevo.';
-  }
 }
 
 /* =========================================================
@@ -140,6 +83,12 @@ function showClassCodeScreen(){
 
 let classQuizState = null;
 
+/* Las actividades antiguas solo tenían "questions" (opción múltiple); se convierten al formato nuevo */
+function classItems(payload){
+  if (payload.items && payload.items.length) return payload.items;
+  return (payload.questions || []).map(q => ({ kind:'mc', q:q.q, options:q.options, correct:q.correct, explain:'' }));
+}
+
 async function loadClassActivity(){
   const code = $('#classCodeInput').value.trim().toUpperCase();
   const status = $('#classCodeStatus');
@@ -150,6 +99,8 @@ async function loadClassActivity(){
     const res = await AppStorage.get('class:' + code, true);
     if (!res || !res.value){ status.textContent = 'No se encontró ninguna actividad con ese código.'; return; }
     const payload = JSON.parse(res.value);
+    payload.items = classItems(payload);
+    if (!payload.items.length){ status.textContent = 'Esa actividad no tiene ejercicios.'; return; }
     classQuizState = { code, payload, index: 0, correct: 0, answers: [], sent: false };
     classNameStep();
   } catch (e) {
@@ -163,7 +114,8 @@ function classNameStep(){
   const st = classQuizState;
   const rn = State.realName || { first:'', last:'' };
   wrap.innerHTML = `
-    <h2 style="text-align:center;">Actividad de ${escapeHtml(st.payload.teacher)}</h2>
+    <h2 style="text-align:center;">${st.payload.title ? escapeHtml(st.payload.title) : 'Actividad'} · ${escapeHtml(st.payload.teacher)}</h2>
+    <p class="level-hint" style="text-align:center;">${st.payload.items.length} ejercicio${st.payload.items.length === 1 ? '' : 's'}</p>
     <p class="level-hint">Antes de empezar, escribe tu <b>nombre y apellido reales</b> para que tu profesor/a sepa quién eres cuando reciba tus resultados.</p>
     <div class="teacher-form">
       <label class="profile-label">Nombre</label>
@@ -195,7 +147,7 @@ async function sendClassResults(){
     try { const r = await AppStorage.get(key, true); if (r && r.value) doc = JSON.parse(r.value); } catch (e) {}
     if (!doc) doc = { code: st.code, attempts: [] };
     doc.student = { first: State.realName.first, last: State.realName.last, username: State.profile ? State.profile.name : '' };
-    doc.attempts.push({ ts: Date.now(), correct: st.correct, total: st.payload.questions.length, answers: st.answers });
+    doc.attempts.push({ ts: Date.now(), correct: st.correct, total: st.payload.items.length, answers: st.answers });
     const ok = await AppStorage.set(key, JSON.stringify(doc), true);
     if (!ok) throw new Error('no se pudo guardar');
     st.sent = true;
@@ -210,17 +162,18 @@ async function sendClassResults(){
 function classQuizRender(){
   const wrap = $('#classCodeWrap');
   const st = classQuizState;
-  if (st.index >= st.payload.questions.length){
+  const items = st.payload.items;
+  if (st.index >= items.length){
     if (!st.rewarded){
       st.rewarded = true;
-      st.coinsEarned = st.correct * 8;
+      st.coinsEarned = Math.min(st.correct * 8, 40);
       State.coins += st.coinsEarned;
-      recordActivity('side', 'class-' + st.code, st.correct >= Math.ceil(st.payload.questions.length / 2), st.correct * 10, 0, st.coinsEarned);
+      recordActivity('side', 'class-' + st.code, st.correct >= Math.ceil(items.length / 2), st.correct * 10, 0, st.coinsEarned);
       saveProgress();
     }
     wrap.innerHTML = `
       <h2>¡Actividad completa!</h2>
-      <p>${escapeHtml(State.realName ? State.realName.first : '')}, acertaste ${st.correct} de ${st.payload.questions.length}. Ganaste 🪙 ${st.coinsEarned} monedas.</p>
+      <p>${escapeHtml(State.realName ? State.realName.first : '')}, acertaste ${st.correct} de ${items.length}. Ganaste 🪙 ${st.coinsEarned} monedas.</p>
       <p class="level-hint">Actividad creada por ${escapeHtml(st.payload.teacher)}.</p>
       <button class="modal-btn primary profile-save-btn" id="classSendBtn">📨 Enviar mis resultados a mi profesor/a</button>
       <p class="level-hint" id="classSendMsg"></p>
@@ -237,30 +190,130 @@ function classQuizRender(){
     });
     return;
   }
-  const item = st.payload.questions[st.index];
-  const order = shuffle(item.options.map((text, i) => ({ text, correct: i === item.correct })));
+
+  const item = items[st.index];
+  st.locked = false;
+  const kinfo = (typeof T_KINDS !== 'undefined' && T_KINDS[item.kind]) ? T_KINDS[item.kind] : { icon:'🔘', label:'Pregunta' };
+  const title = item.kind === 'classify'
+    ? `<div class="cq-prompt">${escapeHtml(item.prompt || 'Clasifica')}</div><div class="cq-term">${escapeHtml(item.term)}</div>`
+    : `<div class="quiz-question">${escapeHtml(item.q)}</div>`;
   wrap.innerHTML = `
-    <p class="level-hint">Pregunta ${st.index + 1} / ${st.payload.questions.length} · Actividad de ${escapeHtml(st.payload.teacher)}</p>
-    <div class="quiz-card"><div class="quiz-question">${escapeHtml(item.q)}</div></div>
-    <div class="quiz-options" id="classQuizOptions"></div>
+    <p class="level-hint">Ejercicio ${st.index + 1} / ${items.length} · ${escapeHtml(st.payload.title || 'Actividad')} de ${escapeHtml(st.payload.teacher)}</p>
+    <div class="cq-kind">${kinfo.icon} ${kinfo.label}</div>
+    <div class="quiz-card cq-card">${title}</div>
+    <div id="classBody"></div>
+    <div id="classFeedback"></div>
   `;
-  const box = $('#classQuizOptions');
+  if (item.kind === 'order') classRenderOrder(item);
+  else if (item.kind === 'match') classRenderMatch(item);
+  else classRenderChoice(item);
+}
+
+/* Muestra si acertó, la explicación y el botón para continuar */
+function classAnswer(item, ok, chosen, right, extraMsg){
+  const st = classQuizState;
+  if (st.locked) return;
+  st.locked = true;
+  if (ok){ st.correct++; beep('correct'); }
+  else { recordMistake('actividad', item.q); beep('wrong'); }
+  st.answers.push({ q: item.q, ok: !!ok, chosen: String(chosen), right: String(right) });
+  const last = st.index + 1 >= st.payload.items.length;
+  const fb = $('#classFeedback');
+  fb.innerHTML = `
+    <div class="cq-feedback ${ok ? 'ok' : 'bad'}">
+      <b>${ok ? '✅ ¡Correcto!' : '❌ No es correcto.'}</b>
+      ${!ok && item.kind !== 'order' && item.kind !== 'match' ? ' La respuesta correcta es: <b>' + escapeHtml(right) + '</b>.' : ''}
+      ${!ok && item.kind === 'order' ? '<div class="cq-right">Orden correcto: ' + item.steps.map((x, i) => (i + 1) + '. ' + escapeHtml(x)).join('<br>') + '</div>' : ''}
+      ${extraMsg ? '<div>' + escapeHtml(extraMsg) + '</div>' : ''}
+      ${item.explain ? '<div class="cq-explain">💡 ' + escapeHtml(item.explain) + '</div>' : ''}
+    </div>
+    <button class="modal-btn primary" id="classNext">${last ? 'Ver resultado ▶' : 'Siguiente ▶'}</button>`;
+  $('#classNext').addEventListener('click', () => { st.index++; classQuizRender(); });
+  fb.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+/* Opción múltiple, verdadero/falso y clasificar */
+function classRenderChoice(item){
+  const raw = item.options.map((text, i) => ({ text, correct: i === item.correct }));
+  const order = item.kind === 'mc' ? shuffle(raw) : raw;   // V/F y categorías mantienen su orden
+  const box = $('#classBody');
+  box.className = 'quiz-options' + (item.kind === 'classify' || item.kind === 'vf' ? ' cq-row' : '');
+  const rightText = item.options[item.correct];
   order.forEach(opt => {
-    const btn = el('button', 'quiz-opt', opt.text);
+    const btn = el('button', 'quiz-opt', escapeHtml(opt.text));
     btn.addEventListener('click', () => {
-      $$('.quiz-opt', box).forEach(b => {
-        b.disabled = true;
-        if (b.textContent === item.options[item.correct]) b.classList.add('correct');
-      });
-      if (!opt.correct) recordMistake('actividad', item.q);
-      st.answers.push({ q: item.q, ok: !!opt.correct, chosen: opt.text, right: item.options[item.correct] });
-      if (opt.correct){ st.correct++; beep('correct'); }
-      else { beep('wrong'); btn.classList.add('wrong'); }
-      st.index++;
-      setTimeout(classQuizRender, 1000);
+      if (classQuizState.locked) return;
+      $$('.quiz-opt', box).forEach(b => b.disabled = true);
+      $$('.quiz-opt', box).forEach((b, i) => { if (order[i].correct) b.classList.add('correct'); });
+      if (!opt.correct) btn.classList.add('wrong');
+      classAnswer(item, opt.correct, opt.text, rightText);
     });
     box.appendChild(btn);
   });
+}
+
+/* Ordenar pasos: toca los bloques en el orden correcto y pulsa Comprobar */
+function classRenderOrder(item){
+  const box = $('#classBody');
+  const correct = item.steps;
+  const pool = shuffle(correct.map(t => ({ t })));
+  let placed = [];
+  const draw = () => {
+    box.innerHTML = `
+      <p class="level-hint" style="margin:0 0 6px;">Toca los pasos en el orden correcto. Toca un paso colocado para devolverlo.</p>
+      <div class="cq-slots">${correct.map((_, i) => placed[i]
+        ? `<div class="cq-slot filled" data-i="${i}"><span class="cq-n">${i + 1}</span>${escapeHtml(placed[i].t)}</div>`
+        : `<div class="cq-slot"><span class="cq-n">${i + 1}</span><em>Vacío</em></div>`).join('')}</div>
+      <div class="cq-tray">${pool.filter(p => placed.indexOf(p) < 0).map(p => `<button class="cq-chip" data-k="${pool.indexOf(p)}">${escapeHtml(p.t)}</button>`).join('')}</div>
+      <button class="modal-btn primary" id="cqCheck" ${placed.length < correct.length ? 'disabled' : ''}>▶ Comprobar</button>`;
+    $$('.cq-chip', box).forEach(b => b.addEventListener('click', () => { placed.push(pool[+b.dataset.k]); beep('click'); draw(); }));
+    $$('.cq-slot.filled', box).forEach(b => b.addEventListener('click', () => { placed.splice(+b.dataset.i, 1); draw(); }));
+    $('#cqCheck').addEventListener('click', () => {
+      const ok = placed.every((p, i) => p.t === correct[i]);
+      $$('.cq-slot', box).forEach((sl, i) => sl.classList.add(placed[i].t === correct[i] ? 'good' : 'badslot'));
+      $$('.cq-slot.filled', box).forEach(n => n.replaceWith(n.cloneNode(true)));   // bloquea clics
+      $('#cqCheck').disabled = true;
+      classAnswer(item, ok, placed.map(p => p.t).join(' → '), correct.join(' → '));
+    });
+  };
+  draw();
+}
+
+/* Unir parejas: toca un término y luego su definición */
+function classRenderMatch(item){
+  const box = $('#classBody');
+  const pairs = item.pairs;
+  const defs = shuffle(pairs.map((p, i) => ({ d: p[1], i })));
+  box.innerHTML = `
+    <p class="level-hint" style="margin:0 0 6px;">Toca un término y luego la definición que le corresponde.</p>
+    <div class="cq-match">
+      <div class="cq-col">${pairs.map((p, i) => `<button class="cq-m cq-mt" data-i="${i}">${escapeHtml(p[0])}</button>`).join('')}</div>
+      <div class="cq-col">${defs.map(d => `<button class="cq-m cq-md" data-i="${d.i}">${escapeHtml(d.d)}</button>`).join('')}</div>
+    </div>`;
+  let sel = null, done = 0, mistakes = 0;
+  $$('.cq-mt', box).forEach(b => b.addEventListener('click', () => {
+    if (b.classList.contains('matched') || classQuizState.locked) return;
+    $$('.cq-mt', box).forEach(x => x.classList.remove('selected'));
+    b.classList.add('selected'); sel = b;
+  }));
+  $$('.cq-md', box).forEach(b => b.addEventListener('click', () => {
+    if (!sel || b.classList.contains('matched') || classQuizState.locked) return;
+    if (sel.dataset.i === b.dataset.i){
+      sel.classList.remove('selected'); sel.classList.add('matched'); b.classList.add('matched');
+      sel = null; done++; beep('correct');
+      if (done === pairs.length){
+        classAnswer(item, mistakes === 0,
+          mistakes === 0 ? 'Sin errores' : mistakes + ' error' + (mistakes === 1 ? '' : 'es'),
+          pairs.map(p => p[0] + ' = ' + p[1]).join('; '),
+          mistakes === 0 ? '' : 'Completaste las parejas, pero con ' + mistakes + ' error' + (mistakes === 1 ? '' : 'es') + '.');
+      }
+    } else {
+      mistakes++; beep('wrong');
+      const t = sel; sel.classList.remove('selected'); sel = null;
+      t.classList.add('wrongflash'); b.classList.add('wrongflash');
+      setTimeout(() => { t.classList.remove('wrongflash'); b.classList.remove('wrongflash'); }, 350);
+    }
+  }));
 }
 
 
@@ -308,7 +361,7 @@ async function showTeacherResults(code){
     </div>
     <div class="online-panel">
       <h3 class="prog-h">Resultados · código ${escapeHtml(code)}</h3>
-      ${act ? '<p class="level-hint" style="margin:0 0 10px;">' + act.questions.length + ' preguntas · creada el ' + new Date(act.createdAt).toLocaleDateString('es') + '</p>' : ''}
+      ${act ? '<p class="level-hint" style="margin:0 0 10px;">' + (act.title ? escapeHtml(act.title) + ' · ' : '') + classItems(act).length + ' ejercicios · creada el ' + new Date(act.createdAt).toLocaleDateString('es') + '</p>' : ''}
       <div class="prog-stats">
         <div class="prog-stat"><b>${students.length}</b><span>alumnos</span></div>
         <div class="prog-stat"><b>${totalAttempts}</b><span>intentos enviados</span></div>

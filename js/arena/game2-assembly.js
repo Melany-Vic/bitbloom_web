@@ -106,10 +106,10 @@ function ArenaAssemblyScene(){
         diamonds: [[450, 212], [560, 395]],
         chest: [200, 395],
         springs: [[690, 424], [100, 424]],
-        spikes: [[380, 424], [520, 424]],
+        spikes: [[380, 424]],
         flames: [[270, 424]],
         saws: [[425, 485, 424]],
-        maces: [[470, 90]],
+        maces: [[190, 30]],          // bola de púas lejos de la ruta de saltos (antes bloqueaba el camino)
         enemies: [[250, 330, 300], [420, 490, 245]],
       };
     }
@@ -175,9 +175,9 @@ function ArenaAssemblyScene(){
     (L.maces || []).forEach(([x, y]) => {
       const m = this.add.image(x, y, 'ob_mace').setDepth(3);
       m.setScale(44 / m.height);
-      this.tweens.add({ targets:m, y:y + 70, duration:1400, yoyo:true, repeat:-1, ease:'Sine.inOut' });
+      this.tweens.add({ targets:m, y:y + 55, duration:2200, yoyo:true, repeat:-1, ease:'Sine.inOut' });
       this.tweens.add({ targets:m, angle:360, duration:2400, repeat:-1 });
-      this.hazards.push({ obj:m, dyn:true, r:16, active:() => true });
+      this.hazards.push({ obj:m, dyn:true, r:12, active:() => true });
       this.deco.push(m);
     });
 
@@ -188,13 +188,14 @@ function ArenaAssemblyScene(){
       en.setDisplaySize(40, 40);
       en.body.allowGravity = false;
       en.dir = 1; en.minX = a; en.maxX = b;
-      en.speed = round === 1 ? 60 : 90;
+      en.speed = round === 1 ? 60 : 65;
       this.enemies.add(en);
     });
 
     this.player.setPosition(60, 380);
     this.player.setVelocity(0, 0);
-    this.roundTime = (round === 1 ? 140 : 125) * ARENA_BONUS.time;
+    this.lastSafe = null;
+    this.roundTime = (round === 1 ? 140 : 150) * ARENA_BONUS.time;
     this.elapsed = 0;
     this.hint.setText(`Ronda ${round}/2 — Recoge las 4 piezas y entra al portal. ¡Los trampolines te lanzan alto!`);
   }
@@ -231,8 +232,10 @@ function ArenaAssemblyScene(){
     this.cameras.main.shake(150, 0.01);
     this.invulnerable = true;
     this.player.setTint(0xff4d8f);
-    this.player.setPosition(60, 380); this.player.setVelocity(0, 0);
-    this.time.delayedCall(900, () => { this.invulnerable = false; this.player.clearTint(); });
+    /* Reaparece en el último lugar seguro (no vuelve al inicio) y queda protegido un momento */
+    const rs = this.lastSafe || { x:60, y:380 };
+    this.player.setPosition(rs.x, rs.y - 6); this.player.setVelocity(0, 0);
+    this.time.delayedCall(1600, () => { this.invulnerable = false; this.player.clearTint(); });
     beep('wrong');
     if (this.lives <= 0) this.lose();
   }
@@ -266,13 +269,16 @@ function ArenaAssemblyScene(){
         beep('correct');
       }
     });
+    let touched = false;
     for (const h of this.hazards){
       if (!h.active()) continue;
       const hit = h.dyn
         ? Phaser.Geom.Intersects.CircleToRectangle(new Phaser.Geom.Circle(h.obj.x, h.obj.y, h.r), pb)
         : Phaser.Geom.Intersects.RectangleToRectangle(pb, h.rect);
-      if (hit){ this.hurt(); break; }
+      if (hit){ touched = true; this.hurt(); break; }
     }
+    /* Guarda el último lugar seguro donde el jugador estuvo parado */
+    if (!touched && !this.invulnerable && this.player.body.blocked.down) this.lastSafe = { x:this.player.x, y:this.player.y };
     if (this.collected >= this.needed && !this.asking && Phaser.Geom.Intersects.RectangleToRectangle(pb, this.portalRect)){
       /* El portal hace una pregunta sobre hardware antes de dejarte pasar */
       this.asking = true;
@@ -295,6 +301,7 @@ function ArenaAssemblyScene(){
       arenaGameOver(true, this.score, '¡Armaste la computadora completa en las dos rondas!');
     } else {
       this.score += 30; beep('win');
+      if (this.lives < 3 + ARENA_BONUS.lives){ this.lives++; ArenaHUD.setLives(this.lives); arenaTeach(this, '❤️ ¡Vida recuperada!', 'Pasaste la ronda 1: recuperas una vida.', '#ff4d8f'); }
       this.buildRound(2);
     }
   }

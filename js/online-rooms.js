@@ -139,7 +139,7 @@ async function createOnlineRoom(){
       code = randomRoomCode();
     }
     const roomRef = fs.doc(db, 'rooms', code);
-    const me = { name, score: 0, finished: false };
+    const me = { name, score: 0, finished: false, skin: currentSkin() };
     if (mode === 'duos') me.team = 'A';
     const room = {
       hostUid: uid, mode, activity, status: 'waiting', round: 0, createdAt: Date.now(),
@@ -177,7 +177,7 @@ async function joinRoomByCode(code, rawName){
       const taken = () => active.some(([, p]) => (p.name || '').toLowerCase() === n.toLowerCase());
       while (taken()) n = nm.name.slice(0, 15) + ' ' + (k++);
       finalName = n;
-      const p = { name:n, score:0, finished:false };
+      const p = { name:n, score:0, finished:false, skin: currentSkin() };
       if (d.mode === 'duos'){
         const a = active.filter(([, q]) => q.team === 'A').length, b = active.filter(([, q]) => q.team === 'B').length;
         p.team = a <= b ? 'A' : 'B';
@@ -376,7 +376,7 @@ function renderRoomLobby(){
   players.forEach(([pUid, p]) => {
     const row = el('div', `online-player-row ${pUid === uid ? 'me' : ''}`);
     row.innerHTML = `
-      <span class="p-name">${escapeHtml(p.name)}${data.mode === 'duos' && p.team ? ' · ' + escapeHtml(duoName(data, p.team)) : ''}${pUid === data.hostUid ? ' 👑' : ''}${pUid === uid ? ' (tú)' : ''}</span>
+      <span class="p-name">${lbHeadHtml(p.skin)}${escapeHtml(p.name)}${data.mode === 'duos' && p.team ? ' · ' + escapeHtml(duoName(data, p.team)) : ''}${pUid === data.hostUid ? ' 👑' : ''}${pUid === uid ? ' (tú)' : ''}</span>
       <span class="online-status-badge ${p.finished ? 'ready' : ''}">${p.finished ? `⬡ ${p.score}` : (data.status === 'playing' ? 'jugando…' : 'listo')}</span>
     `;
     list.appendChild(row);
@@ -886,7 +886,7 @@ function buildRoundResult(data, uid){
       ${players.filter(([, p]) => p.team === t).map(([u, p]) => `
       <div class="leaderboard-row duo-member">
         <div class="leaderboard-rank"></div>
-        <div class="leaderboard-name">${escapeHtml(p.name)}${u === uid ? ' (tú)' : ''}</div>
+        <div class="leaderboard-name">${lbHeadHtml(p.skin)}${escapeHtml(p.name)}${u === uid ? ' (tú)' : ''}</div>
         <div class="leaderboard-score">⬡ ${p.score || 0}</div>
         <div class="mp-wins">${voteIcon(p.vote)}</div>
       </div>`).join('')}`).join('');
@@ -904,7 +904,7 @@ function buildRoundResult(data, uid){
     rowsHtml = sorted.map(([u, p], i) => `
       <div class="leaderboard-row ${u === uid ? 'me' : ''}">
         <div class="leaderboard-rank">${data.mode === 'competencia' && i === 0 && (p.score || 0) > 0 ? '🏆' : i + 1}</div>
-        <div class="leaderboard-name">${escapeHtml(p.name)}${u === uid ? ' (tú)' : ''}</div>
+        <div class="leaderboard-name">${lbHeadHtml(p.skin)}${escapeHtml(p.name)}${u === uid ? ' (tú)' : ''}</div>
         <div class="leaderboard-score">⬡ ${p.score || 0}</div>
         <div class="mp-wins">${voteIcon(p.vote)}</div>
       </div>`).join('');
