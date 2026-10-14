@@ -1,5 +1,5 @@
 /* =========================================================
-   ARENA DE DESAFÍOS — framework compartido para los 6 juegos
+   ARENA DE DESAFÍOS — framework compartido para los 5 juegos
    construidos con Phaser 3. Cada juego es una Phaser.Scene
    independiente; este archivo se encarga de:
    - cargar Phaser bajo demanda (no penaliza el arranque normal)
@@ -91,7 +91,7 @@ function showArena(){
   bitHide();
   $('#arenaCoins').textContent = State.coins;
   const wrap = $('#arenaWrap');
-  wrap.innerHTML = `<p class="level-hint"><b>6 juegos</b> de desafío extra, más difíciles, pensados para competir o jugar en equipo. Ganás monedas por completarlos.</p>
+  wrap.innerHTML = `<p class="level-hint">Desafíos extra, más difíciles, pensados para competir o jugar en equipo. Ganás monedas por completarlos.</p>
     <div style="text-align:center; margin:-4px 0 12px;"><button class="modal-btn" id="btnMyMusic">🎵 Mi música</button></div>
     <div class="arena-grid" id="arenaGrid"></div>`;
   $('#btnMyMusic').onclick = openMusicSettings;

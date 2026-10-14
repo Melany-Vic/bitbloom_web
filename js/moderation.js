@@ -32,12 +32,13 @@ const _BAD_COLLAPSED = BAD_WORDS.map(w => _collapse(_normText(w).replace(/\s+/g,
 const _BAD_SET = new Set(_BAD_COLLAPSED);
 
 /* Devuelve { ok:true } o { ok:false, reason:'...' } */
-function checkText(text){
+function checkText(text, opts){
   const raw = String(text || '');
+  const contact = !(opts && opts.contact === false);
   // Datos personales y enlaces (seguridad de niñas y niños)
-  if (/https?:\/\/|www\.|\.(com|net|org|io|xyz|me|tk|gg)\b/i.test(raw)) return { ok:false, reason:'No se pueden compartir enlaces.' };
-  if (/[\w.+-]+@[\w-]+\.[\w.]+/.test(raw))                          return { ok:false, reason:'No compartas correos electrónicos.' };
-  if (/(\d[\s.\-]?){7,}/.test(raw))                                  return { ok:false, reason:'No compartas números de teléfono ni datos personales.' };
+  if (contact && (/https?:\/\/|www\.|\.(com|net|org|io|xyz|me|tk|gg)\b/i.test(raw))) return { ok:false, reason:'No se pueden compartir enlaces.' };
+  if (contact && /[\w.+-]+@[\w-]+\.[\w.]+/.test(raw))                return { ok:false, reason:'No compartas correos electrónicos.' };
+  if (contact && /(\d[\s.\-]?){7,}/.test(raw))                        return { ok:false, reason:'No compartas números de teléfono ni datos personales.' };
 
   const norm = _normText(raw);
   // tokens (palabras)

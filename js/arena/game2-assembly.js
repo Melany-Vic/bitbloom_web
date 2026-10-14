@@ -108,9 +108,9 @@ function ArenaAssemblyScene(){
         springs: [[690, 424], [100, 424]],
         spikes: [[380, 424]],
         flames: [[270, 424]],
-        saws: [[425, 485, 424]],
-        maces: [[190, 30]],          // bola de púas lejos de la ruta de saltos (antes bloqueaba el camino)
-        enemies: [[250, 330, 300], [420, 490, 245]],
+        saws: [[430, 480, 424]],
+        maces: [],
+        enemies: [[250, 330, 300]],
       };
     }
     L.plats.forEach(([x, y, w]) => this.addPlatform(x, y, w, L.key));
@@ -167,17 +167,17 @@ function ArenaAssemblyScene(){
       const s = this.add.image(x0, y - 22, 'ob_saw').setDepth(3);
       s.setScale(46 / s.height);
       this.tweens.add({ targets:s, angle:360, duration:600, repeat:-1 });
-      this.tweens.add({ targets:s, x:x1, duration:2200, yoyo:true, repeat:-1, ease:'Sine.inOut' });
-      this.hazards.push({ obj:s, dyn:true, r:17, active:() => true });
+      this.tweens.add({ targets:s, x:x1, duration:3200, yoyo:true, repeat:-1, ease:'Sine.inOut' });
+      this.hazards.push({ obj:s, dyn:true, r:14, active:() => true });
       this.deco.push(s);
     });
     // Bolas con púas que suben y bajan
     (L.maces || []).forEach(([x, y]) => {
       const m = this.add.image(x, y, 'ob_mace').setDepth(3);
       m.setScale(44 / m.height);
-      this.tweens.add({ targets:m, y:y + 55, duration:2200, yoyo:true, repeat:-1, ease:'Sine.inOut' });
+      this.tweens.add({ targets:m, y:y + 70, duration:1400, yoyo:true, repeat:-1, ease:'Sine.inOut' });
       this.tweens.add({ targets:m, angle:360, duration:2400, repeat:-1 });
-      this.hazards.push({ obj:m, dyn:true, r:12, active:() => true });
+      this.hazards.push({ obj:m, dyn:true, r:16, active:() => true });
       this.deco.push(m);
     });
 
@@ -188,14 +188,13 @@ function ArenaAssemblyScene(){
       en.setDisplaySize(40, 40);
       en.body.allowGravity = false;
       en.dir = 1; en.minX = a; en.maxX = b;
-      en.speed = round === 1 ? 60 : 65;
+      en.speed = round === 1 ? 55 : 65;
       this.enemies.add(en);
     });
 
     this.player.setPosition(60, 380);
     this.player.setVelocity(0, 0);
-    this.lastSafe = null;
-    this.roundTime = (round === 1 ? 140 : 150) * ARENA_BONUS.time;
+    this.roundTime = (round === 1 ? 140 : 125) * ARENA_BONUS.time;
     this.elapsed = 0;
     this.hint.setText(`Ronda ${round}/2 — Recoge las 4 piezas y entra al portal. ¡Los trampolines te lanzan alto!`);
   }
@@ -232,9 +231,8 @@ function ArenaAssemblyScene(){
     this.cameras.main.shake(150, 0.01);
     this.invulnerable = true;
     this.player.setTint(0xff4d8f);
-    /* Reaparece en el último lugar seguro (no vuelve al inicio) y queda protegido un momento */
-    const rs = this.lastSafe || { x:60, y:380 };
-    this.player.setPosition(rs.x, rs.y - 6); this.player.setVelocity(0, 0);
+    const sp = this.lastSafe || { x:60, y:380 };
+    this.player.setPosition(sp.x, sp.y - 20); this.player.setVelocity(0, 0);
     this.time.delayedCall(1600, () => { this.invulnerable = false; this.player.clearTint(); });
     beep('wrong');
     if (this.lives <= 0) this.lose();
@@ -249,6 +247,7 @@ function ArenaAssemblyScene(){
     const right = this.cursors.right.isDown || this.keys.D.isDown || ts.right;
     const jump = this.cursors.up.isDown || this.keys.SPACE.isDown || this.keys.W.isDown || ts.up;
 
+    if (this.player.body.blocked.down && !this.invulnerable) this.lastSafe = { x:this.player.x, y:this.player.y };
     this.player.setVelocityX(left ? -200 : right ? 200 : 0);
     if (left) this.player.setFlipX(true); else if (right) this.player.setFlipX(false);
     if (jump && this.player.body.blocked.down) this.player.setVelocityY(-620);
@@ -269,16 +268,13 @@ function ArenaAssemblyScene(){
         beep('correct');
       }
     });
-    let touched = false;
     for (const h of this.hazards){
       if (!h.active()) continue;
       const hit = h.dyn
         ? Phaser.Geom.Intersects.CircleToRectangle(new Phaser.Geom.Circle(h.obj.x, h.obj.y, h.r), pb)
         : Phaser.Geom.Intersects.RectangleToRectangle(pb, h.rect);
-      if (hit){ touched = true; this.hurt(); break; }
+      if (hit){ this.hurt(); break; }
     }
-    /* Guarda el último lugar seguro donde el jugador estuvo parado */
-    if (!touched && !this.invulnerable && this.player.body.blocked.down) this.lastSafe = { x:this.player.x, y:this.player.y };
     if (this.collected >= this.needed && !this.asking && Phaser.Geom.Intersects.RectangleToRectangle(pb, this.portalRect)){
       /* El portal hace una pregunta sobre hardware antes de dejarte pasar */
       this.asking = true;
@@ -301,7 +297,6 @@ function ArenaAssemblyScene(){
       arenaGameOver(true, this.score, '¡Armaste la computadora completa en las dos rondas!');
     } else {
       this.score += 30; beep('win');
-      if (this.lives < 3 + ARENA_BONUS.lives){ this.lives++; ArenaHUD.setLives(this.lives); arenaTeach(this, '❤️ ¡Vida recuperada!', 'Pasaste la ronda 1: recuperas una vida.', '#ff4d8f'); }
       this.buildRound(2);
     }
   }

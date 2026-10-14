@@ -233,16 +233,10 @@ async function showProfileScreen(mode){
    mejor puntaje de cada nombre de jugador.
    ========================================================= */
 const LEADERBOARD_KEY = 'bitbloom-leaderboard';   // lista antigua (única); se sigue leyendo para no perder datos
-let _lbLastSent = -1, _lbTimer = null, _lbAuto = null;
+let _lbLastSent = -1, _lbLastSkin = null, _lbTimer = null, _lbAuto = null;
 
 /* Cada jugador guarda su propia ficha ("lb:usuario"), así no se pisan los datos entre jugadores */
 function lbKey(){ return 'lb:' + slugifyProfileName(State.profile.name); }
-
-/* Cabeza del personaje que el jugador tiene elegido (se ve en la clasificación y en las salas) */
-function lbHeadHtml(skinId){
-  const id = (typeof SKIN_IDS !== 'undefined' && SKIN_IDS.indexOf(skinId) >= 0) ? skinId : 'bit';
-  return `<img class="lb-head" src="${skinHeadSrc(id)}" alt="" loading="lazy">`;
-}
 
 async function submitToLeaderboard(){
   try {
@@ -250,18 +244,17 @@ async function submitToLeaderboard(){
     const entry = {
       name: State.profile.name, role: State.profile.role,
       score: totalPoints(), levelScore: State.score || 0, extraScore: State.extraPoints || 0,
-      coins: State.coins, date: Date.now(),
-      skin: (typeof currentSkin === 'function') ? currentSkin() : 'bit',
+      coins: State.coins, skin: currentSkin(), date: Date.now(),
     };
     const ok = await AppStorage.set(lbKey(), JSON.stringify(entry), true);
-    if (ok) _lbLastSent = entry.score;
+    if (ok){ _lbLastSent = entry.score; _lbLastSkin = entry.skin; }
     return !!ok;
   } catch (e) { return false; }
 }
 
 /* Se llama cada vez que se guarda el progreso: envía los puntos nuevos poco después */
 function scheduleLeaderboardSync(){
-  if (!State.profile || totalPoints() === _lbLastSent) return;
+  if (!State.profile || (totalPoints() === _lbLastSent && currentSkin() === _lbLastSkin)) return;
   clearTimeout(_lbTimer);
   _lbTimer = setTimeout(submitToLeaderboard, 1200);
 }
@@ -343,7 +336,7 @@ async function renderLeaderboard(silent){
           return `
           <div class="leaderboard-row ${isMe ? 'me' : ''}">
             <div class="leaderboard-rank">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</div>
-            <div class="leaderboard-name">${lbHeadHtml(isMe ? currentSkin() : p.skin)}<span class="lb-role" title="${p.role === 'profesor' ? 'Profesor/a' : 'Estudiante'}">${p.role === 'profesor' ? '🧑‍🏫' : '🎓'}</span> ${escapeHtml(p.name)}${p.levelScore != null ? ' <small>niveles ' + p.levelScore + ' · juegos ' + (p.extraScore || 0) + '</small>' : ''}</div>
+            <div class="leaderboard-name"><img class="lb-head" src="${skinHeadSrc(SKIN_IDS.indexOf(p.skin) >= 0 ? p.skin : 'bit')}" alt=""> <span class="lb-role" title="${p.role === 'profesor' ? 'Profesor/a' : 'Estudiante'}">${p.role === 'profesor' ? '🧑‍🏫' : '🎓'}</span> ${escapeHtml(p.name)}${p.levelScore != null ? ' <small>niveles ' + p.levelScore + ' · juegos ' + (p.extraScore || 0) + '</small>' : ''}</div>
             <div class="leaderboard-score">⬡ ${total}</div>
             <div class="leaderboard-coins">🪙 ${p.coins || 0}</div>
           </div>`;

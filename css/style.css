@@ -1302,141 +1302,28 @@ body.mp-game .bit-companion{ transform:scale(.6); }
 .music-vol{ display:flex; align-items:center; gap:10px; }
 .music-vol input[type=range]{ flex:1; }
 
+.lb-head{ height:30px; width:auto; max-width:44px; object-fit:contain; vertical-align:middle; margin-right:2px; filter:drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
+.lb-role{ font-size:13px; opacity:.85; }
 
-/* ---------- Cabezas de personajes en clasificación y salas ---------- */
-.lb-head{ display:inline-block; width:30px; height:30px; border-radius:50%; object-fit:cover; object-position:50% 12%; background:rgba(79,214,255,.12); border:1.5px solid var(--circuit-cyan); vertical-align:middle; margin-right:6px; flex:0 0 auto; }
-.leaderboard-name .lb-role{ font-size:13px; margin-right:2px; opacity:.9; }
-.online-player-row .p-name .lb-head{ width:26px; height:26px; }
-
-
-/* =========================================================
-   CONSTRUCTOR DE ACTIVIDADES DEL PROFESOR + EJERCICIOS DEL ALUMNO
-   ========================================================= */
-.tb-topics{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:10px; }
-.tb-topic{ text-align:left; display:flex; flex-direction:column; gap:3px; padding:12px; border-radius:var(--radius-sm); background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text-hi); cursor:pointer; font-family:var(--font-body); transition:border-color .15s, transform .15s; }
-.tb-topic:hover{ border-color:var(--circuit-cyan); transform:translateY(-2px); }
-.tb-topic.on{ border-color:var(--bloom-lime); box-shadow:0 0 14px rgba(164,242,60,.22); background:rgba(164,242,60,.08); }
-.tb-topic.scratch{ border-style:dashed; }
-.tb-topic-icon{ font-size:24px; }
-.tb-topic-name{ font-weight:700; font-size:14px; }
-.tb-topic-desc{ font-size:11.5px; color:var(--text-dim); line-height:1.35; }
-.tb-topic-n{ font-size:11px; color:var(--circuit-cyan); margin-top:2px; }
-
-.tb-bank-actions{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
-.tb-bank-actions .modal-btn{ padding:6px 10px; font-size:11.5px; }
-.tb-bank-list{ display:flex; flex-direction:column; gap:6px; max-height:420px; overflow-y:auto; padding-right:4px; }
-.tb-row{ display:flex; align-items:flex-start; gap:10px; padding:8px 10px; border-radius:var(--radius-sm); background:var(--bg-panel-2); border:1px solid var(--line); cursor:pointer; }
-.tb-row.sel{ border-color:var(--bloom-lime); background:rgba(164,242,60,.08); }
-.tb-row input{ margin-top:3px; flex:none; width:18px; height:18px; accent-color:var(--bloom-lime); }
-.tb-row-main{ display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; text-align:left; }
-.tb-row-text{ font-size:13px; line-height:1.4; color:var(--text-hi); word-break:break-word; }
-.tb-badge{ align-self:flex-start; font-size:10.5px; padding:2px 8px; border-radius:20px; border:1px solid var(--line); color:var(--text-dim); background:rgba(0,0,0,.2); }
-.tb-badge.tb-mc{ color:var(--circuit-cyan); border-color:var(--circuit-cyan-dim); }
-.tb-badge.tb-vf{ color:var(--bloom-lime); border-color:var(--bloom-lime-dim); }
-.tb-badge.tb-classify{ color:var(--spark-gold); border-color:#8a7324; }
-.tb-badge.tb-order{ color:#ff9ad0; border-color:#8a3f66; }
-.tb-badge.tb-match{ color:#b9a4ff; border-color:#5d4aa3; }
-
-.tb-sel-list{ display:flex; flex-direction:column; gap:6px; margin-top:10px; }
-.tb-sel{ display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:var(--radius-sm); background:var(--bg-panel-2); border:1px solid var(--line); }
-.tb-sel-n{ flex:none; width:24px; height:24px; border-radius:50%; background:var(--circuit-cyan); color:#04101c; font-weight:700; font-size:12px; display:flex; align-items:center; justify-content:center; }
-.tb-sel-btns{ display:flex; gap:4px; flex:none; }
-.tb-mini{ width:30px; height:30px; border-radius:8px; background:var(--bg-panel); border:1px solid var(--line); color:var(--text-hi); cursor:pointer; font-size:13px; }
-.tb-mini:hover:not(:disabled){ border-color:var(--circuit-cyan); color:var(--circuit-cyan); }
-.tb-mini.del:hover{ border-color:var(--alert-magenta); color:var(--alert-magenta); }
-.tb-mini:disabled{ opacity:.3; cursor:default; }
-.tb-add{ display:flex; flex-wrap:wrap; gap:6px; }
-.tb-add .modal-btn{ padding:7px 11px; font-size:12px; }
-
-.tb-editor{ max-height:62vh; overflow-y:auto; padding-right:4px; }
-.tb-cats{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; }
-.tb-cat{ display:flex; flex-direction:column; gap:6px; }
-.tb-cat textarea{ resize:vertical; font-family:var(--font-body); }
-.tb-pair{ display:flex; align-items:center; gap:6px; }
-.tb-pair input{ flex:1; min-width:0; }
-.tb-editor textarea.profile-input{ resize:vertical; font-family:var(--font-body); }
-
-/* ----- Ejercicios del alumno ----- */
-.cq-kind{ display:inline-block; font-size:11.5px; padding:3px 12px; border-radius:20px; border:1px solid var(--circuit-cyan-dim); color:var(--circuit-cyan); margin:2px 0 8px; }
-.cq-card{ text-align:center; }
-.cq-prompt{ font-size:13px; color:var(--text-dim); margin-bottom:6px; }
-.cq-term{ font-family:var(--font-display); font-size:22px; color:var(--spark-gold); }
-.quiz-options.cq-row{ flex-direction:row; flex-wrap:wrap; justify-content:center; }
-.quiz-options.cq-row .quiz-opt{ flex:1 1 140px; text-align:center; }
-.cq-feedback{ max-width:600px; margin:14px auto 10px; padding:12px 14px; border-radius:var(--radius-sm); text-align:left; font-size:14px; line-height:1.5; border:1px solid var(--line); background:var(--bg-panel); }
-.cq-feedback.ok{ border-color:var(--bloom-lime); }
-.cq-feedback.bad{ border-color:var(--alert-magenta); }
-.cq-explain{ margin-top:6px; color:var(--text-dim); font-size:13px; }
-.cq-right{ margin-top:6px; font-size:12.5px; color:var(--text-dim); }
-#classFeedback + *, #classFeedback ~ .modal-btn{ margin-top:4px; }
-#classFeedback{ text-align:center; }
-
-.cq-slots{ display:flex; flex-direction:column; gap:6px; max-width:600px; margin:0 auto 10px; }
-.cq-slot{ display:flex; align-items:center; gap:10px; min-height:44px; padding:8px 12px; border-radius:var(--radius-sm); border:1px dashed var(--line); background:rgba(0,0,0,.18); font-size:13.5px; text-align:left; color:var(--text-faint); }
-.cq-slot.filled{ border:1px solid var(--circuit-cyan); background:rgba(79,214,255,.1); color:var(--text-hi); cursor:pointer; }
-.cq-slot.good{ border-color:var(--bloom-lime); background:rgba(164,242,60,.12); cursor:default; }
-.cq-slot.badslot{ border-color:var(--alert-magenta); background:rgba(255,77,143,.14); cursor:default; }
-.cq-n{ flex:none; width:22px; height:22px; border-radius:50%; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text-hi); font-size:11px; display:flex; align-items:center; justify-content:center; }
-.cq-tray{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; max-width:600px; margin:0 auto 12px; }
-.cq-chip{ padding:9px 12px; border-radius:var(--radius-sm); background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text-hi); font-family:var(--font-body); font-size:13px; cursor:pointer; text-align:left; }
-.cq-chip:hover{ border-color:var(--circuit-cyan); }
-#cqCheck{ display:block; margin:0 auto; }
-
-.cq-match{ display:grid; grid-template-columns:1fr 1fr; gap:10px; max-width:640px; margin:0 auto; }
-.cq-col{ display:flex; flex-direction:column; gap:8px; }
-.cq-m{ padding:10px 12px; border-radius:var(--radius-sm); background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text-hi); font-family:var(--font-body); font-size:13px; cursor:pointer; text-align:left; min-height:44px; }
-.cq-m:hover:not(.matched){ border-color:var(--circuit-cyan); }
-.cq-m.selected{ border-color:var(--circuit-cyan); background:rgba(79,214,255,.14); box-shadow:0 0 12px rgba(79,214,255,.25); }
-.cq-m.matched{ border-color:var(--bloom-lime); background:rgba(164,242,60,.12); color:var(--bloom-lime); cursor:default; }
-.cq-m.wrongflash{ border-color:var(--alert-magenta); background:rgba(255,77,143,.18); }
-@media (max-width:520px){ .cq-match{ grid-template-columns:1fr; } .tb-sel{ flex-wrap:wrap; } }
-
-
-/* =========================================================
-   PANEL DEL PROFESOR — versión ordenada, sin emojis
-   (mismo lenguaje visual que los juegos: Orbitron, cian/lima, paneles oscuros)
-   ========================================================= */
-.tp-tabs{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:10px; }
-.tp-tab{ font-family:var(--font-display); font-size:12px; letter-spacing:.05em; text-transform:uppercase; padding:10px 16px; border-radius:var(--radius-sm); background:var(--bg-panel); border:1px solid var(--line); color:var(--text-dim); cursor:pointer; }
-.tp-tab:hover{ color:var(--circuit-cyan); border-color:var(--circuit-cyan-dim); }
-.tp-tab.on{ color:var(--bg-void); background:linear-gradient(135deg, var(--circuit-cyan), var(--bloom-lime)); border-color:transparent; }
-.tp-tab-side{ margin-left:auto; }
-.tp-tab-side.on{ background:var(--bg-panel); color:var(--text-dim); border-color:var(--line); }
-.tp-note{ padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--bloom-lime); background:rgba(164,242,60,.08); color:var(--bloom-lime); font-size:13px; margin-bottom:12px; }
-.tp-cards{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; margin-top:12px; }
-.tp-card{ display:flex; flex-direction:column; gap:6px; padding:14px; background:var(--bg-panel); border:1px solid var(--line); border-left:3px solid var(--circuit-cyan); border-radius:var(--radius-sm); text-align:left; }
-.tp-card-top{ display:flex; justify-content:space-between; align-items:center; }
-.tp-code{ font-family:var(--font-display); font-size:18px; letter-spacing:.14em; color:var(--spark-gold); }
-.tp-date{ font-size:11px; color:var(--text-faint); }
-.tp-card-title{ font-weight:600; font-size:14px; color:var(--text-hi); }
-.tp-card-meta{ font-size:12px; color:var(--text-dim); min-height:16px; }
-.tp-card .modal-btn{ margin-top:6px; padding:8px 12px; font-size:11px; }
-
-/* pasos del constructor */
-.tb-step-head{ display:flex; gap:12px; align-items:flex-start; margin-bottom:14px; text-align:left; }
-.tb-step-n{ flex:none; width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:14px; color:var(--bg-void); background:linear-gradient(135deg, var(--circuit-cyan), var(--bloom-lime)); }
-.tb-step-t{ font-family:var(--font-display); font-size:13px; letter-spacing:.04em; color:var(--circuit-cyan); }
-.tb-step-d{ font-size:12px; color:var(--text-dim); margin-top:3px; line-height:1.4; }
-.tb-topic{ border-left:3px solid var(--circuit-cyan-dim); }
-.tb-topic.on{ border-left-color:var(--bloom-lime); }
-.tb-topic-name{ font-family:var(--font-display); font-size:12px; letter-spacing:.02em; }
-.tb-topic-n{ font-size:11px; color:var(--circuit-cyan); margin-top:4px; }
-.tb-list-head{ display:flex; justify-content:space-between; margin:16px 0 8px; font-family:var(--font-display); font-size:11px; letter-spacing:.05em; color:var(--text-dim); }
-.tb-empty{ padding:14px; text-align:center; font-size:13px; color:var(--text-faint); border:1px dashed var(--line); border-radius:var(--radius-sm); }
-.tb-badge{ font-family:var(--font-display); font-size:9.5px; letter-spacing:.04em; text-transform:uppercase; padding:3px 8px; border-radius:6px; }
-.tb-sel{ flex-wrap:wrap; }
-.tb-sel-btns{ flex-wrap:wrap; justify-content:flex-end; }
-.tb-mini{ width:auto; height:auto; padding:5px 10px; font-family:var(--font-display); font-size:10px; letter-spacing:.03em; text-transform:uppercase; }
-.tb-pair-sep{ font-size:11px; color:var(--text-faint); text-transform:uppercase; font-family:var(--font-display); }
-
-/* ----- Ejercicios del alumno: colores en lugar de emojis ----- */
-.cq-kind{ font-family:var(--font-display); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; padding:4px 12px; border-radius:6px; border:1px solid var(--circuit-cyan-dim); color:var(--circuit-cyan); margin:2px 0 10px; }
-.cq-feedback{ border-left-width:4px; text-align:left; }
-.cq-feedback.ok{ background:rgba(164,242,60,.10); border-color:var(--bloom-lime); }
-.cq-feedback.bad{ background:rgba(255,77,143,.10); border-color:var(--alert-magenta); }
-.cq-verdict{ display:block; font-family:var(--font-display); font-size:13px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px; }
-.cq-feedback.ok .cq-verdict{ color:var(--bloom-lime); }
-.cq-feedback.bad .cq-verdict{ color:var(--alert-magenta); }
-.cq-explain{ margin-top:8px; padding-top:8px; border-top:1px solid var(--line); }
-.tr-flag{ color:var(--alert-magenta); }
-.tr-okline{ color:var(--bloom-lime); }
+/* Asistente de actividades del profesor */
+.tw-steps{ display:flex; gap:6px; flex-wrap:wrap; }
+.tw-steps span{ font-size:11.5px; padding:5px 10px; border-radius:999px; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text-dim); }
+.tw-steps span.on{ border-color:var(--circuit-cyan); color:var(--circuit-cyan); }
+.tw-steps span.done{ border-color:var(--bloom-lime); color:var(--bloom-lime); }
+.tw-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:10px; }
+.tw-card{ display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left; padding:12px; min-height:88px; background:var(--bg-panel-2); border:1px solid var(--line); border-radius:var(--radius-sm); color:var(--text-hi); font-size:13px; transition:.15s; }
+.tw-card:hover{ border-color:var(--circuit-cyan); transform:translateY(-2px); }
+.tw-card.sel{ border-color:var(--bloom-lime); box-shadow:0 0 14px rgba(164,242,60,.25); }
+.tw-card .tw-ico{ font-size:24px; }
+.tw-card small{ color:var(--text-dim); font-size:11.5px; }
+.tw-card em{ color:var(--spark-gold); font-size:11px; font-style:normal; margin-top:auto; }
+.tw-list{ display:flex; flex-direction:column; gap:6px; max-height:300px; overflow-y:auto; }
+.tw-item{ display:flex; align-items:flex-start; gap:10px; padding:8px 10px; background:var(--bg-panel-2); border:1px solid var(--line); border-radius:8px; font-size:13px; text-align:left; cursor:pointer; }
+.tw-item input{ margin-top:3px; width:18px; height:18px; flex:none; }
+.tw-item span{ flex:1; }
+.tw-item em{ color:var(--spark-gold); font-style:normal; }
+.tw-item small{ color:var(--text-faint); }
+.tw-item.custom{ border-color:var(--circuit-cyan); cursor:default; align-items:center; }
+.teacher-option-row{ display:flex; align-items:center; gap:8px; margin:6px 0; font-size:13px; }
+.teacher-option-row .profile-input{ margin:0; flex:1; }
+.l4-card.matched{ border-color:var(--bloom-lime) !important; background:rgba(164,242,60,.12) !important; opacity:.7; }

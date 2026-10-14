@@ -101,6 +101,7 @@ function buySkin(sk){
   State.coins -= sk.cost;
   State.shopOwned.add('skin_' + sk.id);
   State.skin = sk.id;               // al comprarlo queda equipado
+  if (typeof submitToLeaderboard === 'function') submitToLeaderboard();
   beep('win');
   $('#shopCoins').textContent = State.coins;
   renderShop();
@@ -110,6 +111,7 @@ function buySkin(sk){
 function equipSkin(sk){
   if (!ownsSkin(sk.id)) return;
   State.skin = sk.id;
+  if (typeof submitToLeaderboard === 'function') submitToLeaderboard();
   beep('correct');
   renderShop();
   refreshProfileUI();
