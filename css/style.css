@@ -1390,3 +1390,53 @@ body.mp-game .bit-companion{ transform:scale(.6); }
 .cq-m.matched{ border-color:var(--bloom-lime); background:rgba(164,242,60,.12); color:var(--bloom-lime); cursor:default; }
 .cq-m.wrongflash{ border-color:var(--alert-magenta); background:rgba(255,77,143,.18); }
 @media (max-width:520px){ .cq-match{ grid-template-columns:1fr; } .tb-sel{ flex-wrap:wrap; } }
+
+
+/* =========================================================
+   PANEL DEL PROFESOR — versión ordenada, sin emojis
+   (mismo lenguaje visual que los juegos: Orbitron, cian/lima, paneles oscuros)
+   ========================================================= */
+.tp-tabs{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; border-bottom:1px solid var(--line); padding-bottom:10px; }
+.tp-tab{ font-family:var(--font-display); font-size:12px; letter-spacing:.05em; text-transform:uppercase; padding:10px 16px; border-radius:var(--radius-sm); background:var(--bg-panel); border:1px solid var(--line); color:var(--text-dim); cursor:pointer; }
+.tp-tab:hover{ color:var(--circuit-cyan); border-color:var(--circuit-cyan-dim); }
+.tp-tab.on{ color:var(--bg-void); background:linear-gradient(135deg, var(--circuit-cyan), var(--bloom-lime)); border-color:transparent; }
+.tp-tab-side{ margin-left:auto; }
+.tp-tab-side.on{ background:var(--bg-panel); color:var(--text-dim); border-color:var(--line); }
+.tp-note{ padding:10px 14px; border-radius:var(--radius-sm); border:1px solid var(--bloom-lime); background:rgba(164,242,60,.08); color:var(--bloom-lime); font-size:13px; margin-bottom:12px; }
+.tp-cards{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; margin-top:12px; }
+.tp-card{ display:flex; flex-direction:column; gap:6px; padding:14px; background:var(--bg-panel); border:1px solid var(--line); border-left:3px solid var(--circuit-cyan); border-radius:var(--radius-sm); text-align:left; }
+.tp-card-top{ display:flex; justify-content:space-between; align-items:center; }
+.tp-code{ font-family:var(--font-display); font-size:18px; letter-spacing:.14em; color:var(--spark-gold); }
+.tp-date{ font-size:11px; color:var(--text-faint); }
+.tp-card-title{ font-weight:600; font-size:14px; color:var(--text-hi); }
+.tp-card-meta{ font-size:12px; color:var(--text-dim); min-height:16px; }
+.tp-card .modal-btn{ margin-top:6px; padding:8px 12px; font-size:11px; }
+
+/* pasos del constructor */
+.tb-step-head{ display:flex; gap:12px; align-items:flex-start; margin-bottom:14px; text-align:left; }
+.tb-step-n{ flex:none; width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-size:14px; color:var(--bg-void); background:linear-gradient(135deg, var(--circuit-cyan), var(--bloom-lime)); }
+.tb-step-t{ font-family:var(--font-display); font-size:13px; letter-spacing:.04em; color:var(--circuit-cyan); }
+.tb-step-d{ font-size:12px; color:var(--text-dim); margin-top:3px; line-height:1.4; }
+.tb-topic{ border-left:3px solid var(--circuit-cyan-dim); }
+.tb-topic.on{ border-left-color:var(--bloom-lime); }
+.tb-topic-name{ font-family:var(--font-display); font-size:12px; letter-spacing:.02em; }
+.tb-topic-n{ font-size:11px; color:var(--circuit-cyan); margin-top:4px; }
+.tb-list-head{ display:flex; justify-content:space-between; margin:16px 0 8px; font-family:var(--font-display); font-size:11px; letter-spacing:.05em; color:var(--text-dim); }
+.tb-empty{ padding:14px; text-align:center; font-size:13px; color:var(--text-faint); border:1px dashed var(--line); border-radius:var(--radius-sm); }
+.tb-badge{ font-family:var(--font-display); font-size:9.5px; letter-spacing:.04em; text-transform:uppercase; padding:3px 8px; border-radius:6px; }
+.tb-sel{ flex-wrap:wrap; }
+.tb-sel-btns{ flex-wrap:wrap; justify-content:flex-end; }
+.tb-mini{ width:auto; height:auto; padding:5px 10px; font-family:var(--font-display); font-size:10px; letter-spacing:.03em; text-transform:uppercase; }
+.tb-pair-sep{ font-size:11px; color:var(--text-faint); text-transform:uppercase; font-family:var(--font-display); }
+
+/* ----- Ejercicios del alumno: colores en lugar de emojis ----- */
+.cq-kind{ font-family:var(--font-display); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; padding:4px 12px; border-radius:6px; border:1px solid var(--circuit-cyan-dim); color:var(--circuit-cyan); margin:2px 0 10px; }
+.cq-feedback{ border-left-width:4px; text-align:left; }
+.cq-feedback.ok{ background:rgba(164,242,60,.10); border-color:var(--bloom-lime); }
+.cq-feedback.bad{ background:rgba(255,77,143,.10); border-color:var(--alert-magenta); }
+.cq-verdict{ display:block; font-family:var(--font-display); font-size:13px; letter-spacing:.06em; text-transform:uppercase; margin-bottom:4px; }
+.cq-feedback.ok .cq-verdict{ color:var(--bloom-lime); }
+.cq-feedback.bad .cq-verdict{ color:var(--alert-magenta); }
+.cq-explain{ margin-top:8px; padding-top:8px; border-top:1px solid var(--line); }
+.tr-flag{ color:var(--alert-magenta); }
+.tr-okline{ color:var(--bloom-lime); }

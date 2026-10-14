@@ -12,22 +12,22 @@
    profesor también puede crear sus propias preguntas.
    ========================================================= */
 const T_KINDS = {
-  mc:       { label:'Opción múltiple', icon:'🔘' },
-  vf:       { label:'Verdadero / Falso', icon:'✔️' },
-  classify: { label:'Clasificar', icon:'🗂️' },
-  order:    { label:'Ordenar pasos', icon:'🔢' },
-  match:    { label:'Unir parejas', icon:'🔗' },
+  mc:       { label:'Opción múltiple' },
+  vf:       { label:'Verdadero / Falso' },
+  classify: { label:'Clasificar' },
+  order:    { label:'Ordenar pasos' },
+  match:    { label:'Unir parejas' },
 };
 
 /* ---------- Constructores cortos ---------- */
 function tMC(q, right, wrongs, explain){ return { kind:'mc', q, options:[right].concat(wrongs), correct:0, explain: explain || '' }; }
 function tVF(q, isTrue, explain){ return { kind:'vf', q, options:['Verdadero', 'Falso'], correct: isTrue ? 0 : 1, explain: explain || '' }; }
-function tCL(prompt, cats, terms){ return terms.map(([term, c]) => ({ kind:'classify', prompt, term, q: prompt + ': ' + term, options: cats.slice(), correct: c, explain: term + ' → ' + cats[c] + '.' })); }
+function tCL(prompt, cats, terms){ return terms.map(([term, c]) => ({ kind:'classify', prompt, term, q: prompt + ': ' + term, options: cats.slice(), correct: c, explain: term + ': ' + cats[c] + '.' })); }
 function tOR(q, steps, explain){ return { kind:'order', q, steps, explain: explain || '' }; }
 function tMT(q, pairs, explain){ return { kind:'match', q, pairs, explain: explain || '' }; }
 
 const TEACHER_TOPICS = [
-  { id:'hardware', icon:'🖥️', name:'Hardware y componentes', desc:'CPU, RAM, almacenamiento, GPU, placa madre y periféricos.',
+  { id:'hardware', name:'Hardware y componentes', desc:'CPU, RAM, almacenamiento, GPU, placa madre y periféricos.',
     items:[
       tMC('¿Qué pieza es el "cerebro" del computador y ejecuta las instrucciones?', 'La CPU (procesador)', ['La memoria RAM', 'El SSD', 'La fuente de poder'], 'La CPU ejecuta las instrucciones de los programas y hace los cálculos.'),
       tMC('¿Qué memoria guarda datos de forma temporal mientras el equipo está encendido?', 'La memoria RAM', ['El disco duro', 'La tarjeta de red', 'El monitor'], 'La RAM es rápida y temporal: se borra al apagar el equipo.'),
@@ -41,7 +41,7 @@ const TEACHER_TOPICS = [
       tMT('Une cada componente con su función.', [['CPU', 'Ejecuta instrucciones y cálculos'], ['RAM', 'Memoria temporal de trabajo'], ['SSD', 'Guarda archivos de forma permanente'], ['GPU', 'Procesa imágenes y video']]),
     ] },
 
-  { id:'software', icon:'💿', name:'Software y sistema operativo', desc:'Programas, aplicaciones y funciones del sistema operativo.',
+  { id:'software', name:'Software y sistema operativo', desc:'Programas, aplicaciones y funciones del sistema operativo.',
     items:[
       tMC('¿Qué es un sistema operativo?', 'El programa principal que administra los recursos y permite usar el equipo', ['Una pieza de la placa madre', 'Un tipo de memoria', 'Un cable de red'], 'Windows, Linux, macOS y Android son sistemas operativos.'),
       tMC('¿Cuál de estos es un sistema operativo?', 'Linux', ['Word', 'Google Chrome', 'Zoom'], 'Los otros son programas que se ejecutan sobre un sistema operativo.'),
@@ -54,7 +54,7 @@ const TEACHER_TOPICS = [
       tMC('Un antivirus es un tipo de…', 'Software de protección', ['Hardware de red', 'Memoria externa', 'Dispositivo de salida'], 'Detecta y elimina software malicioso.'),
     ] },
 
-  { id:'hwsw', icon:'⚡', name:'¿Hardware o software?', desc:'Clasificar elementos tecnológicos: lo que se toca y lo que se ejecuta.',
+  { id:'hwsw', name:'¿Hardware o software?', desc:'Clasificar elementos tecnológicos: lo que se toca y lo que se ejecuta.',
     items:[].concat(
       tCL('¿Hardware o software?', ['Hardware', 'Software'], [['Mouse', 0], ['Procesador de texto', 1], ['Memoria RAM', 0], ['Navegador web', 1], ['Placa madre', 0], ['Antivirus', 1], ['Monitor', 0], ['Sistema operativo', 1], ['Cable Ethernet', 0], ['Videojuego', 1]]),
       [
@@ -62,7 +62,7 @@ const TEACHER_TOPICS = [
         tVF('Un documento de Word es hardware.', false, 'Es un archivo: software.'),
       ]) },
 
-  { id:'ensamblaje', icon:'🧩', name:'Ensamblaje de la PC', desc:'Orden de armado, piezas clave y cuidados al ensamblar.',
+  { id:'ensamblaje', name:'Ensamblaje de la PC', desc:'Orden de armado, piezas clave y cuidados al ensamblar.',
     items:[
       tOR('Ordena los pasos para armar una computadora.', ['Instalar la CPU y la RAM en la placa madre', 'Fijar la placa madre dentro del gabinete', 'Instalar la fuente de poder', 'Conectar el almacenamiento y la tarjeta gráfica', 'Cerrar el gabinete y encender el equipo'], 'Primero se prepara la placa madre; al final se prueba el equipo.'),
       tMC('¿Dónde se instala el procesador?', 'En el zócalo (socket) de la placa madre', ['En la fuente de poder', 'Dentro del monitor', 'En el teclado'], 'El socket es la base donde encaja la CPU.'),
@@ -75,7 +75,7 @@ const TEACHER_TOPICS = [
       tMT('Une cada pieza con lo que aporta.', [['Fuente de poder', 'Da energía a los componentes'], ['Placa madre', 'Conecta todas las piezas'], ['Ventilador', 'Enfría los componentes'], ['Gabinete', 'Protege y aloja las piezas']]),
     ] },
 
-  { id:'diagnostico', icon:'🩺', name:'Análisis de problemas (diagnóstico)', desc:'Leer un síntoma y encontrar la causa probable.',
+  { id:'diagnostico', name:'Análisis de problemas (diagnóstico)', desc:'Leer un síntoma y encontrar la causa probable.',
     items:[].concat(
       [
         tMC('La PC no enciende y no hay luces ni sonidos. ¿Qué revisas primero?', 'La fuente de poder', ['El monitor', 'El teclado', 'Los altavoces'], 'Sin energía nada funciona.'),
@@ -89,7 +89,7 @@ const TEACHER_TOPICS = [
       tCL('¿De qué tipo es el problema?', ['Hardware', 'Software', 'Red'], [['Ventilador roto', 0], ['Un programa se cierra con un error', 1], ['El router no da señal', 2], ['Hay un virus en el equipo', 1], ['No hay Wi-Fi en toda la casa', 2]]),
       [tOR('Ordena los pasos para diagnosticar una falla.', ['Observar el síntoma', 'Pensar en las causas posibles', 'Hacer una prueba para confirmar la causa', 'Aplicar la solución', 'Verificar que el problema desapareció'], 'Diagnosticar es un proceso ordenado, no adivinar.')]) },
 
-  { id:'programacion', icon:'💻', name:'Programación y lógica', desc:'Algoritmos, variables, condiciones, bucles y lenguajes.',
+  { id:'programacion', name:'Programación y lógica', desc:'Algoritmos, variables, condiciones, bucles y lenguajes.',
     items:[
       tMC('¿Qué es un algoritmo?', 'Una serie ordenada de pasos para resolver un problema', ['Un tipo de virus', 'Una pieza del computador', 'Un archivo de imagen'], 'Todo programa sigue uno o más algoritmos.'),
       tMC('¿Qué es un bug?', 'Un error en un programa', ['Una pieza del PC', 'Un cable', 'Un lenguaje'], 'Buscar y corregir bugs se llama depurar.'),
@@ -104,7 +104,7 @@ const TEACHER_TOPICS = [
       tMT('Une cada lenguaje con su uso.', [['HTML', 'Estructura de páginas web'], ['CSS', 'Estilo y colores'], ['JavaScript', 'Interactividad en la web'], ['SQL', 'Consultar bases de datos']]),
     ] },
 
-  { id:'bd', icon:'🗄️', name:'Bases de datos', desc:'Tablas, registros, SQL, seguridad, copias de seguridad y nube.',
+  { id:'bd', name:'Bases de datos', desc:'Tablas, registros, SQL, seguridad, copias de seguridad y nube.',
     items:[
       tMC('¿Qué es una base de datos?', 'Información organizada para encontrarla y usarla fácilmente', ['Un tipo de cable', 'Un juego de video', 'Una pieza del PC'], 'Guarda datos de alumnos, productos, contactos, etc.'),
       tMC('En una tabla, cada fila representa…', 'Un registro', ['Una contraseña', 'Un cable', 'Un programa'], 'Cada columna es un campo (nombre, edad…).'),
@@ -119,7 +119,7 @@ const TEACHER_TOPICS = [
       tMT('Une cada instrucción de SQL con lo que hace.', [['SELECT', 'Consultar datos'], ['INSERT', 'Agregar un registro'], ['UPDATE', 'Modificar datos'], ['DELETE', 'Borrar datos']]),
     ] },
 
-  { id:'graficos', icon:'🎨', name:'Gráficos y píxeles', desc:'Píxel, resolución, colores RGB y formatos de imagen.',
+  { id:'graficos', name:'Gráficos y píxeles', desc:'Píxel, resolución, colores RGB y formatos de imagen.',
     items:[
       tMC('¿Qué significan las siglas RGB?', 'Rojo, verde y azul', ['Rápido, grande y brillante', 'Rojo, gris y blanco', 'Registro, gráfico y bit'], 'Las pantallas mezclan luz roja, verde y azul.'),
       tMC('¿Qué es un píxel?', 'El punto más pequeño de una imagen', ['Un tipo de cable', 'Un programa de dibujo', 'Un formato de audio'], 'Una imagen digital está hecha de miles de píxeles.'),
@@ -134,7 +134,7 @@ const TEACHER_TOPICS = [
       tMT('Une cada mezcla de luz con su resultado.', [['Rojo + Verde', 'Amarillo'], ['Verde + Azul', 'Cian'], ['Rojo + Azul', 'Magenta'], ['Rojo + Verde + Azul', 'Blanco']]),
     ] },
 
-  { id:'binario', icon:'🔢', name:'Bits, bytes y binario', desc:'La unidad de información, unidades de medida y el sistema binario.',
+  { id:'binario', name:'Bits, bytes y binario', desc:'La unidad de información, unidades de medida y el sistema binario.',
     items:[
       tMC('¿Cuántos bits forman un byte?', '8 bits', ['2 bits', '16 bits', '10 bits'], '1 byte = 8 bits.'),
       tMC('El sistema binario usa solo los dígitos…', '0 y 1', ['1 al 9', '0 al 7', 'A y B'], 'Los computadores solo entienden dos estados: apagado y encendido.'),
@@ -149,7 +149,7 @@ const TEACHER_TOPICS = [
       tMT('Une cada número binario con su valor decimal.', [['1', '1'], ['10', '2'], ['100', '4'], ['101', '5']]),
     ] },
 
-  { id:'redes', icon:'🌐', name:'Redes e Internet', desc:'Paquetes, IP, router, Wi-Fi y protocolos como HTTP, FTP y SSH.',
+  { id:'redes', name:'Redes e Internet', desc:'Paquetes, IP, router, Wi-Fi y protocolos como HTTP, FTP y SSH.',
     items:[
       tMC('¿Qué es un paquete en una red?', 'Un trocito de datos con su destino', ['Una caja con cables', 'Un tipo de virus', 'Un programa de dibujo'], 'Los datos viajan divididos en paquetes.'),
       tMC('¿Para qué sirve una red de computadores?', 'Para conectar equipos y compartir información', ['Para apagar el equipo', 'Para dibujar imágenes', 'Para enfriar los componentes'], 'Internet es la red de redes.'),
@@ -162,7 +162,7 @@ const TEACHER_TOPICS = [
       tOR('Ordena cómo viaja un archivo por la red.', ['El archivo se divide en paquetes', 'Cada paquete recibe la dirección IP de destino', 'Los paquetes viajan por la red', 'El equipo destino reúne los paquetes y reconstruye el archivo']),
     ].concat(tCL('¿Qué protocolo usarías?', ['HTTP', 'FTP', 'SSH'], [['Abrir una página web', 0], ['Subir fotos a un servidor', 1], ['Administrar un servidor de forma segura', 2], ['Descargar un archivo de un servidor', 1]])) },
 
-  { id:'seguridad', icon:'🛡️', name:'Ciberseguridad', desc:'Malware, phishing, contraseñas seguras y buenas prácticas.',
+  { id:'seguridad', name:'Ciberseguridad', desc:'Malware, phishing, contraseñas seguras y buenas prácticas.',
     items:[
       tMC('¿Qué es el malware?', 'Software diseñado para dañar o robar información', ['Un cable de red', 'Una pieza de la placa madre', 'Un programa de dibujo'], 'Incluye virus, troyanos y programas espía.'),
       tMC('¿Qué es el phishing?', 'Un engaño con mensajes o enlaces falsos para robar datos', ['Un tipo de memoria', 'Un antivirus', 'Un protocolo de archivos'], 'Nunca des tus datos desde un enlace sospechoso.'),
@@ -174,7 +174,7 @@ const TEACHER_TOPICS = [
       tVF('Un enlace desconocido en un mensaje puede ser phishing.', true),
     ].concat(tCL('¿Buena o mala práctica?', ['Buena práctica', 'Mala práctica'], [['Activar la verificación en 2 pasos', 0], ['Compartir tu contraseña con amigos', 1], ['Mantener el antivirus actualizado', 0], ['Abrir archivos de desconocidos', 1], ['Hacer clic en "premios sorpresa"', 1]])) },
 
-  { id:'energia', icon:'🔋', name:'Energía y electricidad', desc:'Fuentes renovables, baterías, circuitos y ahorro de energía.',
+  { id:'energia', name:'Energía y electricidad', desc:'Fuentes renovables, baterías, circuitos y ahorro de energía.',
     items:[
       tMC('¿Cuál es una fuente de energía renovable?', 'La solar', ['El petróleo', 'El carbón', 'El gas natural'], 'El Sol no se agota.'),
       tMC('¿Qué energía se obtiene del viento?', 'Eólica', ['Solar', 'Nuclear', 'Hidráulica'], 'Los aerogeneradores la producen.'),

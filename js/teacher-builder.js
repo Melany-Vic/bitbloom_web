@@ -24,7 +24,7 @@ function tbItemText(it){
   if (it.kind === 'match') return `${it.q}  (${it.pairs.length} parejas)`;
   return it.q;
 }
-function tbBadge(kind){ const k = T_KINDS[kind] || { icon:'❔', label:kind }; return `<span class="tb-badge tb-${kind}">${k.icon} ${k.label}</span>`; }
+function tbBadge(kind){ const k = T_KINDS[kind] || { label:kind }; return `<span class="tb-badge tb-${kind}">${k.label}</span>`; }
 
 /* Guarda lo escrito en los campos antes de volver a dibujar la pantalla */
 function tbSync(){
@@ -38,24 +38,23 @@ function tbRender(){
   if (!box) return;
   const topic = tb.topic ? teacherTopicById(tb.topic) : null;
   const selIds = new Set(tb.items.map(x => x.id));
+  const head = (n, t, d) => `<div class="tb-step-head"><span class="tb-step-n">${n}</span><div><div class="tb-step-t">${t}</div><div class="tb-step-d">${d}</div></div></div>`;
 
   const topicCards = TEACHER_TOPICS.map(t => `
     <button class="tb-topic ${tb.topic === t.id ? 'on' : ''}" data-topic="${t.id}">
-      <span class="tb-topic-icon">${t.icon}</span>
       <span class="tb-topic-name">${escapeHtml(t.name)}</span>
       <span class="tb-topic-desc">${escapeHtml(t.desc)}</span>
-      <span class="tb-topic-n">${t.items.length} ejercicios listos</span>
+      <span class="tb-topic-n">${t.items.length} ejercicios</span>
     </button>`).join('');
 
   const bankHtml = topic ? `
     <div class="online-panel tb-bank">
-      <h3 class="prog-h">${topic.icon} ${escapeHtml(topic.name)}</h3>
-      <p class="level-hint" style="margin:0 0 8px;">Marca los ejercicios que quieres en tu actividad. Después puedes cambiarles el orden o editarlos.</p>
+      ${head(2, 'Elige los ejercicios de: ' + escapeHtml(topic.name), 'Marca los que quieras usar. Luego podrás ordenarlos o editarlos.')}
       <div class="tb-bank-actions">
-        <button class="modal-btn" id="tbAll">✅ Elegir todos</button>
-        <button class="modal-btn" id="tbRand5">🎲 5 al azar</button>
-        <button class="modal-btn" id="tbRand10">🎲 10 al azar</button>
-        <button class="modal-btn" id="tbNone">✖ Quitar los de este tema</button>
+        <button class="modal-btn" id="tbAll">Elegir todos</button>
+        <button class="modal-btn" id="tbRand5">5 al azar</button>
+        <button class="modal-btn" id="tbRand10">10 al azar</button>
+        <button class="modal-btn" id="tbNone">Quitar los de este tema</button>
       </div>
       <div class="tb-bank-list">
         ${topic.items.map(it => `
@@ -66,47 +65,46 @@ function tbRender(){
       </div>
     </div>` : '';
 
-  const addBtns = Object.keys(T_KINDS).map(k => `<button class="modal-btn tb-add-btn" data-add="${k}">${T_KINDS[k].icon} ${T_KINDS[k].label}</button>`).join('');
+  const addBtns = Object.keys(T_KINDS).map(k => `<button class="modal-btn tb-add-btn" data-add="${k}">${T_KINDS[k].label}</button>`).join('');
 
   const selHtml = tb.items.length ? tb.items.map((it, i) => `
     <div class="tb-sel">
       <span class="tb-sel-n">${i + 1}</span>
       <span class="tb-row-main">${tbBadge(it.kind)}<span class="tb-row-text">${escapeHtml(tbItemText(it))}</span></span>
       <span class="tb-sel-btns">
-        <button class="tb-mini" data-up="${i}" title="Subir" ${i === 0 ? 'disabled' : ''}>↑</button>
-        <button class="tb-mini" data-down="${i}" title="Bajar" ${i === tb.items.length - 1 ? 'disabled' : ''}>↓</button>
-        ${it.kind !== 'classify' ? `<button class="tb-mini" data-edit="${i}" title="Editar">✎</button>` : ''}
-        <button class="tb-mini del" data-del="${i}" title="Quitar">✕</button>
+        <button class="tb-mini" data-up="${i}" ${i === 0 ? 'disabled' : ''}>Subir</button>
+        <button class="tb-mini" data-down="${i}" ${i === tb.items.length - 1 ? 'disabled' : ''}>Bajar</button>
+        ${it.kind !== 'classify' ? `<button class="tb-mini" data-edit="${i}">Editar</button>` : ''}
+        <button class="tb-mini del" data-del="${i}">Quitar</button>
       </span>
-    </div>`).join('') : '<p class="level-hint" style="margin:6px 0;">Todavía no hay ejercicios. Elige un tema arriba o agrega uno propio.</p>';
+    </div>`).join('') : '<p class="tb-empty">Todavía no hay ejercicios. Elige un tema o agrega uno propio.</p>';
 
   box.innerHTML = `
     <div class="online-panel">
-      <h3 class="prog-h">➕ Crear una actividad</h3>
-      <p class="level-hint" style="margin:0 0 10px;">Elige un <b>tema</b> para usar ejercicios ya preparados (opción múltiple, verdadero/falso, clasificar, ordenar y unir parejas) o crea los tuyos. Puedes mezclar ambas cosas.</p>
+      ${head(1, 'Elige un tema', 'Usa ejercicios ya preparados o crea los tuyos desde cero. Puedes mezclar ambas cosas.')}
       <div class="tb-topics">
         ${topicCards}
-        <button class="tb-topic scratch ${tb.topic === null && tb.items.length === 0 ? '' : ''}" id="tbScratch">
-          <span class="tb-topic-icon">✏️</span>
+        <button class="tb-topic scratch" id="tbScratch">
           <span class="tb-topic-name">Crear desde cero</span>
           <span class="tb-topic-desc">Escribe tus propios ejercicios, sin usar el banco.</span>
-          <span class="tb-topic-n">tú decides todo</span>
+          <span class="tb-topic-n">Personalizado</span>
         </button>
       </div>
     </div>
     ${bankHtml}
     <div class="online-panel tb-mine" id="tbMine">
-      <h3 class="prog-h">📝 Mi actividad <small style="color:var(--text-faint)">(${tb.items.length} / ${TB_MAX_ITEMS})</small></h3>
+      ${head(topic ? 3 : 2, 'Arma tu actividad', 'Revisa el orden, agrega ejercicios propios y guarda con un código de clase.')}
       <div class="teacher-form">
-        <label class="profile-label">Nombre de la actividad (opcional)</label>
+        <label class="profile-label">NOMBRE DE LA ACTIVIDAD (OPCIONAL)</label>
         <input type="text" id="tbTitle" class="profile-input" maxlength="60" placeholder="Ej.: Repaso de hardware" value="${escapeHtml(tb.title)}">
-        <label class="profile-label">Código de clase</label>
+        <label class="profile-label">CÓDIGO DE CLASE</label>
         <input type="text" id="tbCode" class="profile-input" maxlength="8" value="${escapeHtml(tb.code)}" style="text-transform:uppercase;">
       </div>
+      <div class="tb-list-head"><span>EJERCICIOS ELEGIDOS</span><span>${tb.items.length} / ${TB_MAX_ITEMS}</span></div>
       <div class="tb-sel-list">${selHtml}</div>
-      <p class="level-hint" style="margin:10px 0 6px;">➕ Agregar un ejercicio propio:</p>
+      <div class="tb-list-head" style="margin-top:14px;"><span>AGREGAR UN EJERCICIO PROPIO</span></div>
       <div class="tb-add">${addBtns}</div>
-      <button class="modal-btn primary profile-save-btn" id="tbSave" style="margin-top:12px;">Guardar actividad ▶</button>
+      <button class="modal-btn primary profile-save-btn" id="tbSave" style="margin-top:16px;">Guardar actividad ▶</button>
       <p class="level-hint" id="tbStatus"></p>
     </div>`;
 
@@ -201,11 +199,11 @@ function tbEditMC(cur, idx){
       <input type="radio" name="edCorrect" value="${i}" ${(cur ? cur.correct : 0) === i ? 'checked' : ''}>
       <input type="text" class="profile-input ed-opt" placeholder="Opción ${i + 1}${i === 0 ? ' (marca la correcta con el círculo)' : ''}" value="${escapeHtml(opts[i] || '')}">
     </div>`).join('');
-  tbEditorShell('🔘 Opción múltiple', `
-    <label class="profile-label">Pregunta</label>
+  tbEditorShell('Opción múltiple', `
+    <label class="profile-label">PREGUNTA</label>
     <input type="text" id="edQ" class="profile-input" maxlength="200" placeholder="Escribe la pregunta" value="${escapeHtml(cur ? cur.q : '')}">
     ${rows}
-    <label class="profile-label">Explicación (opcional, se muestra al responder)</label>
+    <label class="profile-label">EXPLICACIÓN (OPCIONAL, SE MUESTRA AL RESPONDER)</label>
     <input type="text" id="edExp" class="profile-input" maxlength="240" value="${escapeHtml(cur ? cur.explain || '' : '')}">`);
   $('#edSave').onclick = () => {
     const q = tbVal('#edQ');
@@ -218,13 +216,13 @@ function tbEditMC(cur, idx){
 }
 
 function tbEditVF(cur, idx){
-  tbEditorShell('✔️ Verdadero o falso', `
-    <label class="profile-label">Afirmación</label>
+  tbEditorShell('Verdadero o falso', `
+    <label class="profile-label">AFIRMACIÓN</label>
     <input type="text" id="edQ" class="profile-input" maxlength="200" placeholder="Ej.: La RAM guarda archivos de forma permanente." value="${escapeHtml(cur ? cur.q : '')}">
-    <label class="profile-label">¿Es verdadera o falsa?</label>
+    <label class="profile-label">¿ES VERDADERA O FALSA?</label>
     <div class="teacher-option-row"><input type="radio" name="edTF" value="0" ${!cur || cur.correct === 0 ? 'checked' : ''}> <span>Verdadera</span></div>
     <div class="teacher-option-row"><input type="radio" name="edTF" value="1" ${cur && cur.correct === 1 ? 'checked' : ''}> <span>Falsa</span></div>
-    <label class="profile-label">Explicación (opcional)</label>
+    <label class="profile-label">EXPLICACIÓN (OPCIONAL)</label>
     <input type="text" id="edExp" class="profile-input" maxlength="240" value="${escapeHtml(cur ? cur.explain || '' : '')}">`);
   $('#edSave').onclick = () => {
     const q = tbVal('#edQ');
@@ -235,9 +233,9 @@ function tbEditVF(cur, idx){
 }
 
 function tbEditClassify(){
-  tbEditorShell('🗂️ Clasificar', `
+  tbEditorShell('Clasificar', `
     <p class="level-hint" style="margin:0;">El estudiante verá un elemento a la vez y deberá elegir su categoría. Cada elemento cuenta como un ejercicio.</p>
-    <label class="profile-label">Instrucción</label>
+    <label class="profile-label">INSTRUCCIÓN</label>
     <input type="text" id="edQ" class="profile-input" maxlength="120" placeholder="Ej.: ¿Hardware o software?">
     <div class="tb-cats">
       ${[0, 1, 2].map(i => `
@@ -255,7 +253,7 @@ function tbEditClassify(){
     if (cats.length < 2) return tbEdErr('Escribe al menos 2 categorías.');
     if (groups.some(g => !g.length)) return tbEdErr('Cada categoría necesita al menos un elemento.');
     const out = [];
-    groups.forEach((g, c) => g.forEach(term => out.push({ kind:'classify', prompt, term, q: prompt + ': ' + term, options: cats.slice(), correct: c, explain: term + ' → ' + cats[c] + '.', id: tbUid() })));
+    groups.forEach((g, c) => g.forEach(term => out.push({ kind:'classify', prompt, term, q: prompt + ': ' + term, options: cats.slice(), correct: c, explain: term + ': ' + cats[c] + '.', id: tbUid() })));
     const room = TB_MAX_ITEMS - tb.items.length;
     if (!room) return tbEdErr(`Máximo ${TB_MAX_ITEMS} ejercicios por actividad.`);
     out.slice(0, room).forEach(x => tb.items.push(x));
@@ -265,13 +263,13 @@ function tbEditClassify(){
 }
 
 function tbEditOrder(cur, idx){
-  tbEditorShell('🔢 Ordenar pasos', `
-    <label class="profile-label">Instrucción</label>
+  tbEditorShell('Ordenar pasos', `
+    <label class="profile-label">INSTRUCCIÓN</label>
     <input type="text" id="edQ" class="profile-input" maxlength="160" placeholder="Ej.: Ordena los pasos para encender una PC." value="${escapeHtml(cur ? cur.q : '')}">
-    <label class="profile-label">Pasos en el orden CORRECTO (uno por línea, de 3 a 7)</label>
+    <label class="profile-label">PASOS EN EL ORDEN CORRECTO (UNO POR LÍNEA, DE 3 A 7)</label>
     <textarea id="edSteps" class="profile-input" rows="7" placeholder="Primer paso&#10;Segundo paso&#10;Tercer paso">${escapeHtml(cur ? cur.steps.join('\n') : '')}</textarea>
     <p class="level-hint" style="margin:0;">Al estudiante se le mostrarán mezclados.</p>
-    <label class="profile-label">Explicación (opcional)</label>
+    <label class="profile-label">EXPLICACIÓN (OPCIONAL)</label>
     <input type="text" id="edExp" class="profile-input" maxlength="240" value="${escapeHtml(cur ? cur.explain || '' : '')}">`);
   $('#edSave').onclick = () => {
     const q = tbVal('#edQ');
@@ -287,15 +285,15 @@ function tbEditMatch(cur, idx){
   const rows = [0, 1, 2, 3, 4, 5].map(i => `
     <div class="tb-pair">
       <input type="text" class="profile-input ed-a" maxlength="50" placeholder="Término ${i + 1}${i > 2 ? ' (opcional)' : ''}" value="${escapeHtml((pairs[i] || [])[0] || '')}">
-      <span>↔</span>
+      <span class="tb-pair-sep">con</span>
       <input type="text" class="profile-input ed-b" maxlength="80" placeholder="Definición ${i + 1}" value="${escapeHtml((pairs[i] || [])[1] || '')}">
     </div>`).join('');
-  tbEditorShell('🔗 Unir parejas', `
-    <label class="profile-label">Instrucción</label>
+  tbEditorShell('Unir parejas', `
+    <label class="profile-label">INSTRUCCIÓN</label>
     <input type="text" id="edQ" class="profile-input" maxlength="160" placeholder="Ej.: Une cada componente con su función." value="${escapeHtml(cur ? cur.q : '')}">
-    <label class="profile-label">Parejas (de 3 a 6)</label>
+    <label class="profile-label">PAREJAS (DE 3 A 6)</label>
     ${rows}
-    <label class="profile-label">Explicación (opcional)</label>
+    <label class="profile-label">EXPLICACIÓN (OPCIONAL)</label>
     <input type="text" id="edExp" class="profile-input" maxlength="240" value="${escapeHtml(cur ? cur.explain || '' : '')}">`);
   $('#edSave').onclick = () => {
     const q = tbVal('#edQ');
@@ -346,10 +344,15 @@ async function tbSave(){
       createdAt: Date.now(),
     };
     await AppStorage.set('class:' + code, JSON.stringify(payload), true);
-    await registerTeacherCode(code, payload.title);
-    loadTeacherClasses();
-    tb.code = code;
-    tbStatus(`¡Listo! Comparte el código "${code}" con tus estudiantes (${payload.items.length} ejercicios).`);
+    /* Rótulo del tema: uno solo, varios o personalizada */
+    const tIds = new Set(tb.items.map(x => x.topic || 'propio'));
+    let tName = 'Personalizada';
+    if (tIds.size === 1 && !tIds.has('propio')){ const t1 = teacherTopicById([...tIds][0]); tName = t1 ? t1.name : tName; }
+    else if (tIds.size > 1) tName = 'Varios temas';
+    await registerTeacherCode(code, payload.title, payload.items.length, tName);
+    tbInit();
+    tpTab('mine');
+    loadTeacherClasses(`Actividad guardada. Comparte el código ${code} con tus estudiantes.`);
   } catch (e) {
     tbStatus('No se pudo guardar (esto funciona cuando el juego corre dentro de Claude o con conexión). Inténtalo de nuevo.');
   }

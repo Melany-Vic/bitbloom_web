@@ -16,19 +16,30 @@ function showTeacherPanel(){
   bitHide();
   const wrap = $('#teacherWrap');
   wrap.innerHTML = `
-    <div class="online-panel">
-      <button class="modal-btn" id="teacherFeedbackBtn">💬 Ver opiniones de los usuarios</button>
+    <div class="tp-tabs">
+      <button class="tp-tab on" data-tab="mine">Mis actividades</button>
+      <button class="tp-tab" data-tab="new">Crear actividad</button>
+      <button class="tp-tab tp-tab-side" id="teacherFeedbackBtn">Opiniones</button>
     </div>
-    <div class="online-panel" id="teacherMyClasses">
-      <h3 class="prog-h">📊 Tus actividades y resultados</h3>
+    <div class="tp-pane" id="tpMine">
+      <p class="tp-note hidden" id="tpNote"></p>
       <p class="level-hint" id="teacherClassesMsg">Cargando…</p>
-      <div id="teacherClassesList"></div>
+      <div class="tp-cards" id="teacherClassesList"></div>
     </div>
-    <div id="teacherBuilder"></div>
+    <div class="tp-pane hidden" id="tpNew"><div id="teacherBuilder"></div></div>
   `;
+  $$('.tp-tab[data-tab]', wrap).forEach(b => b.addEventListener('click', () => tpTab(b.dataset.tab)));
   const fbBtn = $('#teacherFeedbackBtn'); if (fbBtn) fbBtn.onclick = showFeedbackInbox;
   tbInit();
   loadTeacherClasses();
+}
+
+/* Cambia entre "Mis actividades" y "Crear actividad" */
+function tpTab(name){
+  $$('.tp-tab[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  const m = $('#tpMine'), n = $('#tpNew');
+  if (m) m.classList.toggle('hidden', name !== 'mine');
+  if (n) n.classList.toggle('hidden', name !== 'new');
 }
 
 /* ---------- Índice de actividades del profesor (para ver sus resultados) ---------- */
@@ -40,26 +51,35 @@ async function getTeacherCodes(){
   } catch (e) {}
   return [];
 }
-async function registerTeacherCode(code, title){
+async function registerTeacherCode(code, title, count, topicName){
   const list = await getTeacherCodes();
   const ex = list.find(c => c.code === code);
-  if (!ex) list.push({ code, createdAt: Date.now(), title: title || '' });
-  else if (title) ex.title = title;
+  if (!ex) list.push({ code, createdAt: Date.now(), title: title || '', count: count || 0, topic: topicName || '' });
+  else { ex.title = title || ''; ex.count = count || ex.count; ex.topic = topicName || ex.topic; }
   try { await AppStorage.set(teacherIndexKey(), JSON.stringify(list), true); } catch (e) {}
 }
-async function loadTeacherClasses(){
-  const msg = $('#teacherClassesMsg'), box = $('#teacherClassesList');
+async function loadTeacherClasses(note){
+  const msg = $('#teacherClassesMsg'), box = $('#teacherClassesList'), nt = $('#tpNote');
   if (!msg || !box) return;
+  if (nt){ nt.textContent = note || ''; nt.classList.toggle('hidden', !note); }
   const list = await getTeacherCodes();
-  if (!list.length){ msg.textContent = 'Aún no has creado actividades. Crea una abajo y compártela con tus estudiantes.'; return; }
-  msg.textContent = 'Toca una actividad para ver cómo les fue a tus estudiantes.';
+  if (!list.length){
+    msg.textContent = 'Aún no has creado actividades. Crea la primera y comparte su código con tus estudiantes.';
+    box.innerHTML = '';
+    if (!note) tpTab('new');
+    return;
+  }
+  msg.textContent = `${list.length} actividad${list.length === 1 ? '' : 'es'}. Abre una para ver cómo les fue a tus estudiantes.`;
   box.innerHTML = '';
   list.slice().reverse().forEach(c => {
-    const row = el('div', 'online-player-row', `
-      <span class="p-name">Código <b>${escapeHtml(c.code)}</b>${c.title ? ' · ' + escapeHtml(c.title) : ''} · ${new Date(c.createdAt).toLocaleDateString('es')}</span>
-      <button class="modal-btn" style="padding:6px 12px; font-size:11px;">Ver resultados ▶</button>`);
-    row.querySelector('button').addEventListener('click', () => showTeacherResults(c.code));
-    box.appendChild(row);
+    const meta = [c.count ? c.count + ' ejercicios' : '', c.topic || ''].filter(Boolean).join(' · ');
+    const card = el('div', 'tp-card', `
+      <div class="tp-card-top"><span class="tp-code">${escapeHtml(c.code)}</span><span class="tp-date">${new Date(c.createdAt).toLocaleDateString('es')}</span></div>
+      <div class="tp-card-title">${c.title ? escapeHtml(c.title) : 'Actividad sin nombre'}</div>
+      <div class="tp-card-meta">${escapeHtml(meta) || '&nbsp;'}</div>
+      <button class="modal-btn">Ver resultados ▶</button>`);
+    card.querySelector('button').addEventListener('click', () => showTeacherResults(c.code));
+    box.appendChild(card);
   });
 }
 
@@ -151,8 +171,8 @@ async function sendClassResults(){
     const ok = await AppStorage.set(key, JSON.stringify(doc), true);
     if (!ok) throw new Error('no se pudo guardar');
     st.sent = true;
-    msg.textContent = '✅ ¡Resultados enviados a tu profesor/a!';
-    btn.textContent = '✓ Enviados';
+    msg.textContent = 'Resultados enviados a tu profesor/a.';
+    btn.textContent = 'Enviados';
   } catch (e) {
     btn.disabled = false;
     msg.textContent = 'No se pudo enviar ahora. Revisa tu conexión e inténtalo de nuevo.';
@@ -173,12 +193,12 @@ function classQuizRender(){
     }
     wrap.innerHTML = `
       <h2>¡Actividad completa!</h2>
-      <p>${escapeHtml(State.realName ? State.realName.first : '')}, acertaste ${st.correct} de ${items.length}. Ganaste 🪙 ${st.coinsEarned} monedas.</p>
+      <p>${escapeHtml(State.realName ? State.realName.first : '')}, acertaste ${st.correct} de ${items.length}. Ganaste ${st.coinsEarned} monedas.</p>
       <p class="level-hint">Actividad creada por ${escapeHtml(st.payload.teacher)}.</p>
-      <button class="modal-btn primary profile-save-btn" id="classSendBtn">📨 Enviar mis resultados a mi profesor/a</button>
+      <button class="modal-btn primary profile-save-btn" id="classSendBtn">Enviar mis resultados a mi profesor/a</button>
       <p class="level-hint" id="classSendMsg"></p>
       <div class="modal-actions" style="margin-top:10px;">
-        <button class="modal-btn" id="classRetryBtn">🔁 Repetir la actividad</button>
+        <button class="modal-btn" id="classRetryBtn">Repetir la actividad</button>
         <button class="modal-btn" id="classCodeBackBtn">Volver al menú</button>
       </div>
     `;
@@ -193,13 +213,13 @@ function classQuizRender(){
 
   const item = items[st.index];
   st.locked = false;
-  const kinfo = (typeof T_KINDS !== 'undefined' && T_KINDS[item.kind]) ? T_KINDS[item.kind] : { icon:'🔘', label:'Pregunta' };
+  const kinfo = (typeof T_KINDS !== 'undefined' && T_KINDS[item.kind]) ? T_KINDS[item.kind] : { label:'Pregunta' };
   const title = item.kind === 'classify'
     ? `<div class="cq-prompt">${escapeHtml(item.prompt || 'Clasifica')}</div><div class="cq-term">${escapeHtml(item.term)}</div>`
     : `<div class="quiz-question">${escapeHtml(item.q)}</div>`;
   wrap.innerHTML = `
     <p class="level-hint">Ejercicio ${st.index + 1} / ${items.length} · ${escapeHtml(st.payload.title || 'Actividad')} de ${escapeHtml(st.payload.teacher)}</p>
-    <div class="cq-kind">${kinfo.icon} ${kinfo.label}</div>
+    <div class="cq-kind">${kinfo.label}</div>
     <div class="quiz-card cq-card">${title}</div>
     <div id="classBody"></div>
     <div id="classFeedback"></div>
@@ -221,11 +241,11 @@ function classAnswer(item, ok, chosen, right, extraMsg){
   const fb = $('#classFeedback');
   fb.innerHTML = `
     <div class="cq-feedback ${ok ? 'ok' : 'bad'}">
-      <b>${ok ? '✅ ¡Correcto!' : '❌ No es correcto.'}</b>
+      <b class="cq-verdict">${ok ? 'Correcto' : 'Incorrecto'}</b>
       ${!ok && item.kind !== 'order' && item.kind !== 'match' ? ' La respuesta correcta es: <b>' + escapeHtml(right) + '</b>.' : ''}
       ${!ok && item.kind === 'order' ? '<div class="cq-right">Orden correcto: ' + item.steps.map((x, i) => (i + 1) + '. ' + escapeHtml(x)).join('<br>') + '</div>' : ''}
       ${extraMsg ? '<div>' + escapeHtml(extraMsg) + '</div>' : ''}
-      ${item.explain ? '<div class="cq-explain">💡 ' + escapeHtml(item.explain) + '</div>' : ''}
+      ${item.explain ? '<div class="cq-explain">' + escapeHtml(item.explain) + '</div>' : ''}
     </div>
     <button class="modal-btn primary" id="classNext">${last ? 'Ver resultado ▶' : 'Siguiente ▶'}</button>`;
   $('#classNext').addEventListener('click', () => { st.index++; classQuizRender(); });
@@ -273,7 +293,7 @@ function classRenderOrder(item){
       $$('.cq-slot', box).forEach((sl, i) => sl.classList.add(placed[i].t === correct[i] ? 'good' : 'badslot'));
       $$('.cq-slot.filled', box).forEach(n => n.replaceWith(n.cloneNode(true)));   // bloquea clics
       $('#cqCheck').disabled = true;
-      classAnswer(item, ok, placed.map(p => p.t).join(' → '), correct.join(' → '));
+      classAnswer(item, ok, placed.map(p => p.t).join(' > '), correct.join(' > '));
     });
   };
   draw();
@@ -356,8 +376,8 @@ async function showTeacherResults(code){
 
   wrap.innerHTML = `
     <div class="modal-actions" style="justify-content:flex-start; margin-bottom:10px;">
-      <button class="modal-btn" id="trBack">← Volver al panel</button>
-      <button class="modal-btn" id="trRefresh">🔄 Actualizar</button>
+      <button class="modal-btn" id="trBack">Volver al panel</button>
+      <button class="modal-btn" id="trRefresh">Actualizar</button>
     </div>
     <div class="online-panel">
       <h3 class="prog-h">Resultados · código ${escapeHtml(code)}</h3>
@@ -370,17 +390,17 @@ async function showTeacherResults(code){
     </div>
     ${students.length ? `
     <div class="online-panel">
-      <h3 class="prog-h">🎯 En qué deben mejorar</h3>
+      <h3 class="prog-h">En qué deben mejorar</h3>
       <p class="prog-note">Porcentaje de alumnos que acertó cada pregunta en su último intento.</p>
       ${qRows.map(r => `
         <div class="tr-q">
           <div class="tr-q-top"><span>${escapeHtml(r.q)}</span><b class="${r.p < 60 ? 'tr-low' : 'tr-ok'}">${r.p}%</b></div>
           <div class="tr-bar"><div class="tr-bar-fill ${r.p < 60 ? 'low' : ''}" style="width:${r.p}%"></div></div>
-          ${r.p < 60 ? '<div class="tr-flag">⚠ Conviene reforzar este tema</div>' : ''}
+          ${r.p < 60 ? '<div class="tr-flag">Conviene reforzar este tema</div>' : ''}
         </div>`).join('')}
     </div>
     <div class="online-panel">
-      <h3 class="prog-h">👥 Alumnos</h3>
+      <h3 class="prog-h">Alumnos</h3>
       ${students.map(d => {
         const l = last(d), best = Math.max(...d.attempts.map(pct));
         return `
@@ -392,7 +412,7 @@ async function showTeacherResults(code){
           ${d.attempts.map((a, i) => `
             <div class="prog-day-row" style="flex-direction:column; gap:4px;">
               <div style="display:flex; justify-content:space-between;"><span>Intento ${i + 1} · ${new Date(a.ts).toLocaleString('es', { dateStyle:'short', timeStyle:'short' })}</span><span>${a.correct}/${a.total} (${pct(a)}%)</span></div>
-              ${a.answers.filter(x => !x.ok).map(x => `<div class="tr-miss">✗ ${escapeHtml(x.q)}<br><small>Respondió: ${escapeHtml(x.chosen)} · Correcta: ${escapeHtml(x.right)}</small></div>`).join('') || '<div class="tr-okline">✓ Todo correcto</div>'}
+              ${a.answers.filter(x => !x.ok).map(x => `<div class="tr-miss">${escapeHtml(x.q)}<br><small>Respondió: ${escapeHtml(x.chosen)} · Correcta: ${escapeHtml(x.right)}</small></div>`).join('') || '<div class="tr-okline">Todo correcto</div>'}
             </div>`).join('')}
           <div class="prog-day-row"><span>Mejor resultado</span><span>${best}%</span></div>
         </details>`;
